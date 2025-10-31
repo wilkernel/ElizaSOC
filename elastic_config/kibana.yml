@@ -1,0 +1,6 @@
+# Configuração básica do Kibana para Suricata
+server.port: 5601
+server.host: "127.0.0.1"
+elasticsearch.hosts: ["http://localhost:9200"]
+kibana.index: ".kibana"
+i18n.locale: "pt-BR"

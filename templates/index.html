@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Monitoramento Phishing Suricata</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🛡️ Dashboard de Monitoramento - Suricata</h1>
+                <div class="status-indicator">
+                    <span id="status-indicator" class="status-dot"></span>
+                    <span id="status-text">Verificando...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <h3 id="total-alerts">0</h3>
+                    <p>Total de Alertas</p>
+                </div>
+            </div>
+            <div class="stat-card phishing">
+                <div class="stat-icon">🚨</div>
+                <div class="stat-content">
+                    <h3 id="phishing-alerts">0</h3>
+                    <p>Alertas de Phishing</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🌐</div>
+                <div class="stat-content">
+                    <h3 id="total-flows">0</h3>
+                    <p>Conexões Monitoradas</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔍</div>
+                <div class="stat-content">
+                    <h3 id="total-dns">0</h3>
+                    <p>Consultas DNS</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="charts-section">
+            <div class="chart-container">
+                <h2>Alertas por Hora (Últimas 24h)</h2>
+                <canvas id="alertsTimeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Distribuição por Severidade</h2>
+                <canvas id="severityChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Top 10 Assinaturas de Alerta</h2>
+                <canvas id="signaturesChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Distribuição por Protocolo</h2>
+                <canvas id="protocolsChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Tabs Section -->
+        <section class="tabs-section">
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchTab('alerts')">Todos os Alertas</button>
+                <button class="tab-button" onclick="switchTab('phishing')">Alertas de Phishing</button>
+                <button class="tab-button" onclick="switchTab('logs')">Logs em Tempo Real</button>
+            </div>
+
+            <!-- Alertas Tab -->
+            <div id="alerts-tab" class="tab-content active">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Assinatura</th>
+                                <th>IP Origem</th>
+                                <th>IP Destino</th>
+                                <th>Protocolo</th>
+                                <th>Severidade</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alerts-table-body">
+                            <tr>
+                                <td colspan="6" class="loading">Carregando alertas...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Phishing Tab -->
+            <div id="phishing-tab" class="tab-content">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Assinatura</th>
+                                <th>IP Origem</th>
+                                <th>IP Destino</th>
+                                <th>Protocolo</th>
+                                <th>Severidade</th>
+                            </tr>
+                        </thead>
+                        <tbody id="phishing-table-body">
+                            <tr>
+                                <td colspan="6" class="loading">Carregando alertas de phishing...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Logs Tab -->
+            <div id="logs-tab" class="tab-content">
+                <div class="logs-container">
+                    <div class="logs-controls">
+                        <button id="start-logs" class="btn btn-primary">Iniciar Monitoramento</button>
+                        <button id="stop-logs" class="btn btn-secondary" disabled>Parar</button>
+                        <button id="clear-logs" class="btn btn-danger">Limpar</button>
+                    </div>
+                    <div id="logs-output" class="logs-output"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
+
+
