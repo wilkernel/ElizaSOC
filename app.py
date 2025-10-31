@@ -13,13 +13,35 @@ from collections import defaultdict, Counter
 from flask import Flask, render_template, jsonify, Response, request
 from flask_cors import CORS
 import time
+import sys
+
+# Importar módulo ClamAV
+try:
+    from clamav_scanner import scan_file, get_recent_scans, get_infected_files, scan_directory
+    CLAMAV_AVAILABLE = True
+except ImportError:
+    CLAMAV_AVAILABLE = False
+    print("⚠️  Módulo clamav_scanner não encontrado. Funcionalidades de escaneamento desabilitadas.")
 
 app = Flask(__name__)
-CORS(app)
+
+# Configurações de Segurança
+# CORS: Permitir apenas localhost em desenvolvimento
+# Em produção, configurar com domínios específicos
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:5000", "http://127.0.0.1:5000"],
+        "methods": ["GET"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 # Configurações
 EVE_JSON_PATH = "/var/log/suricata/eve.json"
 ALERT_LOG_PATH = os.path.join(os.path.dirname(__file__), "logs/alertas_phishing.log")
+
+# Modo de produção (alterar para True em produção)
+PRODUCTION_MODE = os.getenv('FLASK_ENV') != 'development'
 
 # Cache para otimização
 last_file_size = 0
@@ -31,6 +53,42 @@ def is_phishing_alert(signature):
     """Verifica se um alerta é relacionado a phishing/malware"""
     keywords = ['PHISHING', 'TROJAN', 'MALWARE', 'SUSPICIOUS', 'MALICIOUS', 'BLACKLIST']
     return any(keyword in signature.upper() for keyword in keywords)
+
+def is_private_ip(ip):
+    """Verifica se um IP é privado (RFC 1918)"""
+    if not ip or not isinstance(ip, str):
+        return False
+    parts = ip.split('.')
+    if len(parts) != 4:
+        return False
+    try:
+        octets = [int(p) for p in parts]
+        # 192.168.0.0/16
+        if octets[0] == 192 and octets[1] == 168:
+            return True
+        # 10.0.0.0/8
+        if octets[0] == 10:
+            return True
+        # 172.16.0.0/12
+        if octets[0] == 172 and 16 <= octets[1] <= 31:
+            return True
+    except:
+        pass
+    return False
+
+def mask_ip(ip):
+    """Ofusca IPs privados mantendo apenas informação útil para análise"""
+    if not ip or ip == 'N/A' or ip == 'Unknown':
+        return ip
+    
+    if is_private_ip(ip):
+        parts = ip.split('.')
+        # Mostrar apenas último octeto: 192.168.1.100 -> *.100
+        return f"*.{parts[-1]}"
+    else:
+        # IPs públicos podem ser mostrados (são externos mesmo)
+        # Mas você pode ofuscar também se preferir
+        return ip
 
 def parse_eve_json(file_path, limit=None, filter_phishing=False):
     """Lê e parseia o arquivo eve.json do Suricata"""
@@ -67,8 +125,8 @@ def parse_eve_json(file_path, limit=None, filter_phishing=False):
                             'signature': signature,
                             'category': data.get('alert', {}).get('category', ''),
                             'severity': data.get('alert', {}).get('severity', 0),
-                            'src_ip': data.get('src_ip', ''),
-                            'dest_ip': data.get('dest_ip', ''),
+                            'src_ip': mask_ip(data.get('src_ip', '')),
+                            'dest_ip': mask_ip(data.get('dest_ip', '')),
                             'src_port': data.get('src_port', 0),
                             'dest_port': data.get('dest_port', 0),
                             'proto': data.get('proto', ''),
@@ -86,9 +144,11 @@ def parse_eve_json(file_path, limit=None, filter_phishing=False):
                     continue
     
     except PermissionError:
-        print(f"Erro de permissão ao acessar {file_path}")
+        if not PRODUCTION_MODE:
+            print("Erro de permissão ao acessar arquivo de log")
     except Exception as e:
-        print(f"Erro ao ler arquivo: {e}")
+        if not PRODUCTION_MODE:
+            print(f"Erro ao ler arquivo de log")
     
     return alerts, flows, dns_queries
 
@@ -105,8 +165,8 @@ def get_statistics():
         'proto_distribution': Counter(a.get('proto', 'UNKNOWN') for a in alerts),
         'alerts_by_hour': defaultdict(int),
         'top_signatures': Counter(a.get('signature', 'Unknown') for a in alerts),
-        'top_src_ips': Counter(a.get('src_ip', 'Unknown') for a in alerts if a.get('src_ip')),
-        'top_dest_ips': Counter(a.get('dest_ip', 'Unknown') for a in alerts if a.get('dest_ip')),
+        'top_src_ips': Counter(mask_ip(a.get('src_ip', 'Unknown')) for a in alerts if a.get('src_ip')),
+        'top_dest_ips': Counter(mask_ip(a.get('dest_ip', 'Unknown')) for a in alerts if a.get('dest_ip')),
     }
     
     # Agrupar alertas por hora
@@ -152,6 +212,22 @@ def api_stats():
         # Ordenar por hora
         sorted_hours = sorted(hours_24.items(), key=lambda x: x[0])
         
+        # Estatísticas de vírus (se ClamAV disponível)
+        virus_stats = {
+            'total_scanned': 0,
+            'total_infected': 0,
+            'clamav_available': CLAMAV_AVAILABLE
+        }
+        
+        if CLAMAV_AVAILABLE:
+            try:
+                infected = get_infected_files(limit=1000)
+                recent_scans = get_recent_scans(limit=1000)
+                virus_stats['total_scanned'] = len(recent_scans)
+                virus_stats['total_infected'] = len(infected)
+            except:
+                pass
+        
         return jsonify({
             'total_alerts': stats['total_alerts'],
             'phishing_alerts': stats['phishing_alerts'],
@@ -162,10 +238,14 @@ def api_stats():
             'top_signatures': top_signatures,
             'top_src_ips': top_src_ips,
             'alerts_by_hour': dict(sorted_hours[-24:]),
+            'virus_stats': virus_stats,
             'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        if PRODUCTION_MODE:
+            return jsonify({'error': 'Erro ao processar requisição'}), 500
+        else:
+            return jsonify({'error': str(e)}), 500
 
 @app.route('/api/alerts')
 def api_alerts():
@@ -184,7 +264,10 @@ def api_alerts():
             'count': len(alerts)
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        if PRODUCTION_MODE:
+            return jsonify({'error': 'Erro ao processar requisição'}), 500
+        else:
+            return jsonify({'error': str(e)}), 500
 
 @app.route('/api/alerts/recent')
 def api_recent_alerts():
@@ -198,7 +281,10 @@ def api_recent_alerts():
             'count': len(alerts[:50])
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        if PRODUCTION_MODE:
+            return jsonify({'error': 'Erro ao processar requisição'}), 500
+        else:
+            return jsonify({'error': str(e)}), 500
 
 @app.route('/api/phishing')
 def api_phishing():
@@ -212,7 +298,10 @@ def api_phishing():
             'count': len(alerts)
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        if PRODUCTION_MODE:
+            return jsonify({'error': 'Erro ao processar requisição'}), 500
+        else:
+            return jsonify({'error': str(e)}), 500
 
 @app.route('/api/logs/stream')
 def stream_logs():
@@ -222,6 +311,18 @@ def stream_logs():
         if not os.path.exists(file_path):
             yield f"data: {json.dumps({'error': 'Arquivo não encontrado'})}\n\n"
             return
+        
+        # Função para sanitizar dados do log
+        def sanitize_log_data(data):
+            """Remove informações sensíveis do log antes de enviar"""
+            if isinstance(data, dict):
+                sanitized = data.copy()
+                if 'src_ip' in sanitized:
+                    sanitized['src_ip'] = mask_ip(sanitized['src_ip'])
+                if 'dest_ip' in sanitized:
+                    sanitized['dest_ip'] = mask_ip(sanitized['dest_ip'])
+                return sanitized
+            return data
         
         # Ler última posição
         try:
@@ -238,7 +339,8 @@ def stream_logs():
                                 try:
                                     data = json.loads(line.strip())
                                     if data.get('event_type') == 'alert':
-                                        yield f"data: {json.dumps(data)}\n\n"
+                                        sanitized_data = sanitize_log_data(data)
+                                        yield f"data: {json.dumps(sanitized_data)}\n\n"
                                 except:
                                     pass
                             else:
@@ -279,7 +381,83 @@ def api_status():
             'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        if PRODUCTION_MODE:
+            return jsonify({'error': 'Erro ao processar requisição'}), 500
+        else:
+            return jsonify({'error': str(e)}), 500
+
+@app.route('/api/viruses')
+def api_viruses():
+    """API para listar vírus detectados"""
+    if not CLAMAV_AVAILABLE:
+        return jsonify({'error': 'ClamAV não disponível', 'viruses': []}), 503
+    
+    try:
+        limit = int(request.args.get('limit', 50))
+        infected = get_infected_files(limit=limit)
+        
+        # Ordenar por timestamp (mais recentes primeiro)
+        infected.sort(key=lambda x: x.get('scan_time', ''), reverse=True)
+        
+        return jsonify({
+            'viruses': infected[:limit],
+            'count': len(infected)
+        })
+    except Exception as e:
+        if PRODUCTION_MODE:
+            return jsonify({'error': 'Erro ao processar requisição'}), 500
+        else:
+            return jsonify({'error': str(e)}), 500
+
+@app.route('/api/files/scanned')
+def api_files_scanned():
+    """API para listar arquivos escaneados"""
+    if not CLAMAV_AVAILABLE:
+        return jsonify({'error': 'ClamAV não disponível', 'scans': []}), 503
+    
+    try:
+        limit = int(request.args.get('limit', 100))
+        scans = get_recent_scans(limit=limit)
+        
+        # Extrair apenas resultados
+        scan_results = [entry.get('result', {}) for entry in scans]
+        scan_results.sort(key=lambda x: x.get('scan_time', ''), reverse=True)
+        
+        return jsonify({
+            'scans': scan_results[:limit],
+            'count': len(scan_results)
+        })
+    except Exception as e:
+        if PRODUCTION_MODE:
+            return jsonify({'error': 'Erro ao processar requisição'}), 500
+        else:
+            return jsonify({'error': str(e)}), 500
+
+@app.route('/api/files/scan', methods=['POST'])
+def api_scan_file():
+    """API para escanear um arquivo específico"""
+    if not CLAMAV_AVAILABLE:
+        return jsonify({'error': 'ClamAV não disponível'}), 503
+    
+    try:
+        data = request.get_json()
+        filepath = data.get('filepath') if data else request.args.get('filepath')
+        
+        if not filepath:
+            return jsonify({'error': 'Caminho do arquivo não fornecido'}), 400
+        
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'Arquivo não encontrado'}), 404
+        
+        # Escanear arquivo
+        result = scan_file(filepath, quarantine=True)
+        
+        return jsonify(result)
+    except Exception as e:
+        if PRODUCTION_MODE:
+            return jsonify({'error': 'Erro ao processar requisição'}), 500
+        else:
+            return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     # Criar diretório de logs se não existir
@@ -287,8 +465,12 @@ if __name__ == '__main__':
     
     print("🚀 Iniciando servidor web do Dashboard de Monitoramento...")
     print("📊 Acesse: http://localhost:5000")
-    print("⚠️  Certifique-se de que o arquivo /var/log/suricata/eve.json está acessível")
+    if not PRODUCTION_MODE:
+        print("⚠️  Modo desenvolvimento - Certifique-se de que o arquivo de log está acessível")
+    else:
+        print("🔒 Modo produção ativo")
     
-    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+    # Desabilitar debug em produção
+    app.run(host='0.0.0.0', port=5000, debug=not PRODUCTION_MODE, threaded=True)
 
 

@@ -67,3 +67,11 @@ Thumbs.db
 # Arquivos grandes de log do sistema (se necessário)
 # /var/log/suricata/*.log
 
+# Arquivos em quarentena (não commitar)
+quarantine/
+*.quarantine
+
+# Logs de escaneamento (opcional - podem ser grandes)
+logs/clamav_scans.log
+logs/virus_detections.log
+
