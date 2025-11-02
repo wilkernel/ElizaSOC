@@ -1,0 +1,4 @@
+pywebview>=3.7
+pyinstaller>=5.9
+# optional: requests (if you prefer polling endpoints)
+requests>=2.28

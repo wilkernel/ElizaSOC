@@ -10,14 +10,14 @@ QUARANTINE_DIR="/var/quarantine"
 mkdir -p "$QUARANTINE_DIR"
 mkdir -p "$SURICATA_FILES_DIR"
 
-echo "🔍 Iniciando monitoramento automático de arquivos..."
-echo "📁 Diretório monitorado: $SURICATA_FILES_DIR"
-echo "📁 Quarentena: $QUARANTINE_DIR"
+echo " Iniciando monitoramento automático de arquivos..."
+echo " Diretório monitorado: $SURICATA_FILES_DIR"
+echo " Quarentena: $QUARANTINE_DIR"
 echo ""
 
 # Verificar se inotify-tools está instalado
 if ! command -v inotifywait &> /dev/null; then
-    echo "⚠️  inotify-tools não está instalado. Instalando..."
+    echo "  inotify-tools não está instalado. Instalando..."
     sudo apt install -y inotify-tools
 fi
 
@@ -32,20 +32,26 @@ scan_file() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Escaneando: $(basename "$file")"
     
     # Escanear com ClamAV via Python
-    result=$(python3 "$SCRIPT_DIR/clamav_scanner.py" "$file" 2>/dev/null)
+    result=$(python3 -c "
+import sys
+sys.path.insert(0, '$SCRIPT_DIR')
+from clamav_scanner import scan_file
+import json
+print(json.dumps(scan_file('$file')))
+" 2>/dev/null)
     
     # Verificar se foi detectado como vírus
     if echo "$result" | grep -q '"infected": true'; then
         virus_name=$(echo "$result" | grep -o '"virus_name": "[^"]*' | cut -d'"' -f4)
-        echo "🚨 VÍRUS DETECTADO: $(basename "$file") - $virus_name"
+        echo " VÍRUS DETECTADO: $(basename "$file") - $virus_name"
         echo "$(date '+%Y-%m-%d %H:%M:%S') | VÍRUS | $file | $virus_name" >> "$SCRIPT_DIR/logs/virus_detections.log"
     else
-        echo "✅ Limpo: $(basename "$file")"
+        echo " Limpo: $(basename "$file")"
     fi
 }
 
 # Monitorar diretório continuamente
-echo "✅ Monitoramento ativo. Pressione Ctrl+C para parar."
+echo " Monitoramento ativo. Pressione Ctrl+C para parar."
 echo ""
 
 inotifywait -m -e create --format '%w%f' "$SURICATA_FILES_DIR" 2>/dev/null | while read file; do

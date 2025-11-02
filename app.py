@@ -15,13 +15,14 @@ from flask_cors import CORS
 import time
 import sys
 
-# Importar módulo ClamAV
+# Importar módulo ClamAV (wrapper de compatibilidade)
 try:
+    # O wrapper clamav_scanner.py redireciona para a nova implementação
     from clamav_scanner import scan_file, get_recent_scans, get_infected_files, scan_directory
     CLAMAV_AVAILABLE = True
 except ImportError:
     CLAMAV_AVAILABLE = False
-    print("⚠️  Módulo clamav_scanner não encontrado. Funcionalidades de escaneamento desabilitadas.")
+    print("AVISO: Módulo clamav_scanner não encontrado. Funcionalidades de escaneamento desabilitadas.")
 
 app = Flask(__name__)
 
@@ -463,12 +464,12 @@ if __name__ == '__main__':
     # Criar diretório de logs se não existir
     os.makedirs(os.path.dirname(ALERT_LOG_PATH), exist_ok=True)
     
-    print("🚀 Iniciando servidor web do Dashboard de Monitoramento...")
-    print("📊 Acesse: http://localhost:5000")
+    print(" Iniciando servidor web do Dashboard de Monitoramento...")
+    print(" Acesse: http://localhost:5000")
     if not PRODUCTION_MODE:
-        print("⚠️  Modo desenvolvimento - Certifique-se de que o arquivo de log está acessível")
+        print("  Modo desenvolvimento - Certifique-se de que o arquivo de log está acessível")
     else:
-        print("🔒 Modo produção ativo")
+        print(" Modo produção ativo")
     
     # Desabilitar debug em produção
     app.run(host='0.0.0.0', port=5000, debug=not PRODUCTION_MODE, threaded=True)

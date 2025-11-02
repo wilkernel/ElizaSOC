@@ -12,7 +12,7 @@ SMTP_PORT="${SMTP_PORT:-25}"
 # Arquivos de log
 LOG_DIR="/var/log/suricata"
 EVE_JSON="$LOG_DIR/eve.json"
-ALERT_LOG="$HOME/Monitoramento_Phishing_Suricata_Shell/logs/alertas_phishing.log"
+ALERT_LOG="$HOME/ElizaSOC/logs/alertas_phishing.log"
 
 # Função para enviar e-mail
 send_alert_email() {
@@ -41,7 +41,7 @@ Verifique os logs em $EVE_JSON para mais detalhes."
 
 # Verifica se o log existe
 if [ ! -f "$EVE_JSON" ]; then
-    echo "❌ Arquivo $EVE_JSON não encontrado. Verifique se o Suricata está rodando."
+    echo " Arquivo $EVE_JSON não encontrado. Verifique se o Suricata está rodando."
     exit 1
 fi
 
@@ -60,5 +60,5 @@ tail -f "$EVE_JSON" | jq -r '
     # Envia e-mail de alerta
     send_alert_email "$timestamp" "$signature" "$src_ip" "$dest_ip" "$severity"
 
-    echo "✅ Alerta enviado: $signature"
+    echo " Alerta enviado: $signature"
 done

@@ -1,284 +1,278 @@
-# Monitoramento de Phishing, Malware e Vírus com Suricata
+# ElizaSOC - Sistema Avançado de Detecção e Resposta a Ameaças
 
-Sistema completo para monitoramento de atividades suspeitas de phishing, malware e vírus na rede usando Suricata IDS/IPS, ClamAV antivírus, com dashboard web responsivo, alertas por e-mail e visualização em tempo real via ELK Stack.
+**Versão**: 2.0.0  
+**Arquitetura**: Clean Architecture + SOLID + TDD
+
+## Sobre
+
+ElizaSOC é um sistema completo de monitoramento, detecção e resposta automatizada a ameaças de segurança. Desenvolvido seguindo princípios de Clean Architecture, SOLID e Test-Driven Development (TDD).
 
 ## Funcionalidades
 
-- 🔍 **Monitoramento em Tempo Real**: Análise contínua do log `eve.json` do Suricata para detectar domínios suspeitos, malware e ameaças.
-- 🛡️ **Detecção de Vírus**: Escaneamento automático com ClamAV de arquivos baixados e extraídos pelo Suricata.
-- 📊 **Dashboard Web Responsivo**: Interface web moderna com gráficos interativos, visualização de alertas e estatísticas em tempo real.
-- 📧 **Alertas por E-mail**: Notificações automáticas via e-mail quando phishing, malware ou vírus é detectado.
-- 🔒 **Quarentena Automática**: Sistema de quarentena que isola automaticamente arquivos infectados.
-- 📊 **Dashboard ELK**: Visualização interativa de logs com Elasticsearch, Logstash e Kibana.
-- 📝 **Logs Estruturados**: Registro detalhado de todos os alertas e escaneamentos em arquivos locais.
-- 🔧 **Configuração Automática**: Scripts para configurar Suricata, ClamAV e ELK Stack.
-- 🔐 **Segurança**: Ofuscação de IPs privados, CORS configurado, modo produção seguro.
+### Implementado
 
-## Requisitos
+- **Análise de Arquivos**: Escaneamento com ClamAV, quarentena automática
+- **SIEM/Correlação de Eventos**: Correlação inteligente de eventos relacionados
+- **Threat Intelligence**: Verificação de IOCs (IPs, domínios, hashes, URLs)
+- **Análise Comportamental**: Detecção de anomalias com Machine Learning
+- **Resposta Automatizada**: Bloqueio de IPs/domínios, isolamento de endpoints
+- **API REST**: Interface completa para integração
+- **Dashboard Web**: Visualização em tempo real com métricas e controles avançados
+  - 🎯 **Monitor em tempo real** estilo "crypto trading" com gráfico multi-linha
+  - 📊 **Três métricas simultâneas**: Alertas, Rede (Flows+DNS), Sistema
+  - ⚡ Atualização dinâmica a cada 30 segundos
+  - 🚨 Alertas com streaming SSE
+  - 📈 Gráficos interativos (Chart.js)
+  - 🔧 Controle de serviços (Suricata, ClamAV)
+  - 📁 Análise de arquivos e logs
+  - ⚙️ Métricas de sistema (CPU, memória, logs)
 
-- **Sistema Operacional**: Ubuntu 22.04 ou superior
-- **Suricata**: Instalado e configurado como serviço
-- **ClamAV**: Antivírus open source para escaneamento de arquivos
-- **Python 3.6+**: Para o dashboard web e módulos de análise
-- **Flask 3.0+**: Framework web para o dashboard
-- **Ferramentas**: jq, mailx ou sendmail, inotify-tools
-- **ELK Stack** (Opcional): Elasticsearch, Logstash, Kibana para visualização avançada
-- **Permissões**: Acesso root/sudo para configuração inicial
+## Instalação Rápida
 
-## Instalação
-
-### 1. Clonagem do Repositório
 ```bash
-git clone https://github.com/seu-usuario/Monitoramento_Phishing_Suricata_Shell.git
-cd Monitoramento_Phishing_Suricata_Shell
-```
+# 1. Clonar repositório
+git clone <url-repositorio> ElizaSOC
+cd ElizaSOC
 
-### 2. Configuração do Suricata
-```bash
-sudo bash configurar_suricata.sh
-```
-Este script:
-- Configura a interface de rede (wlp2s0)
-- Habilita logging para eve.json
-- Reinicia o serviço Suricata
-
-### 3. Instalação do ELK Stack
-```bash
-# Adicionar repositório Elasticsearch
-wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
-
-# Instalar componentes
+# 2. Instalar dependências do sistema
 sudo apt update
-sudo apt install -y elasticsearch logstash kibana jq mailutils
+sudo apt install -y python3-pip python3-venv clamav
 
-# Copiar configurações
-sudo cp elastic_config/elasticsearch.yml /etc/elasticsearch/
-sudo cp elastic_config/logstash.conf /etc/logstash/conf.d/
-sudo cp elastic_config/kibana.yml /etc/kibana/
+# 3. Criar ambiente virtual (recomendado)
+python3 -m venv venv
+source venv/bin/activate
 
-# Iniciar serviços
-sudo systemctl enable elasticsearch
-sudo systemctl start elasticsearch
-sudo systemctl enable logstash
-sudo systemctl start logstash
-sudo systemctl enable kibana
-sudo systemctl start kibana
+# 4. Instalar dependências Python
+pip install -r requirements.txt
+
+# 5. Configurar ClamAV (opcional)
+sudo freshclam
+
+# 6. Iniciar sistema
+./start.sh
 ```
 
-### 4. Instalação do ClamAV (Antivírus)
-
-```bash
-# Instalar ClamAV
-sudo apt install -y clamav clamav-daemon clamav-freshclam
-
-# Configurar e atualizar assinaturas
-bash configurar_clamav.sh
-
-# Testar instalação
-bash testar_clamav.sh
-```
-
-### 5. Instalação do Dashboard Web
-
-```bash
-# Instalar dependências Python
-pip3 install -r requirements.txt
-
-# Iniciar dashboard
-bash iniciar_dashboard_melhorado.sh
-```
-
-O dashboard estará disponível em: **http://localhost:5000**
-
-### 6. Configuração de E-mail
-Edite o arquivo `alertas_email.sh` e configure as variáveis:
-```bash
-FROM_EMAIL="alerts@seudominio.com"
-TO_EMAIL="admin@seudominio.com"
-SMTP_SERVER="smtp.seudominio.com"
-SMTP_PORT="587"
-```
-
-Para Gmail, use:
-```bash
-FROM_EMAIL="seuemail@gmail.com"
-TO_EMAIL="destinatario@dominio.com"
-SMTP_SERVER="smtp.gmail.com"
-SMTP_PORT="587"
-```
-Certifique-se de habilitar "Acesso a apps menos seguros" no Gmail ou usar App Passwords.
+A API estará disponível em: `http://localhost:5000`
 
 ## Uso
 
-### Dashboard Web (Recomendado)
-
-O modo mais fácil de usar o sistema é através do dashboard web:
+### Iniciar Sistema
 
 ```bash
-bash iniciar_dashboard_melhorado.sh
+# Script Completo (Recomendado) - Inicia todos os serviços automaticamente
+bash start_complete.sh
+
+# API Refatorada
+./start.sh
+
+# Ou especificar tipo
+./start.sh refactored  # API nova (padrão)
+./start.sh legacy      # API antiga (compatibilidade)
 ```
 
-Acesse http://localhost:5000 para:
-- Visualizar alertas em tempo real
-- Ver estatísticas de phishing, malware e vírus
-- Acompanhar gráficos interativos
-- Consultar logs de escaneamentos
+### Dashboard Web
 
-### Monitoramento Básico (Linha de Comando)
+Após iniciar o sistema, acesse o dashboard em:
+```
+http://localhost:5000
+```
+
+O dashboard oferece:
+- 🎯 **Monitor Principal**: Gráfico multi-linha em tempo real (estilo "crypto trading")
+- 📊 **3 Métricas Simultâneas**: Alertas, Rede, Sistema com eixo duplo
+- ⚡ **Atualização Dinâmica**: Refresh automático a cada 30 segundos
+- 📈 **Visualizações**: Gráficos interativos (Chart.js)
+- 🔧 **Controle de Serviços**: Start/Stop/Restart Suricata e ClamAV
+- 📁 **Análise**: Arquivos, logs, protocolos monitorados
+- ⚙️ **Sistema**: CPU, memória, tamanho de logs
+- ✅ **Validação**: Confirmação de dados reais (não mocks)
+
+### API REST
+
+#### Status
 ```bash
-bash monitorar_phishing_servico.sh
+curl http://localhost:5000/api/status
 ```
-Gera relatório de alertas atuais.
 
-### Escaneamento de Arquivos com ClamAV
+#### Alertas
 ```bash
-# Escanear arquivo específico
-python3 clamav_scanner.py /caminho/do/arquivo
+# Listar alertas
+curl http://localhost:5000/api/alerts
 
-# Monitoramento automático de arquivos do Suricata
-bash auto_scan_files.sh &
+# Alertas de phishing
+curl http://localhost:5000/api/alerts/phishing
+
+# Estatísticas
+curl http://localhost:5000/api/alerts/stats
 ```
 
-### Alertas por E-mail
+#### Arquivos
 ```bash
-bash alertas_email.sh &
+# Escanear arquivo
+curl -X POST http://localhost:5000/api/files/scan \
+  -H "Content-Type: application/json" \
+  -d '{"filepath": "/path/to/file", "quarantine": true}'
+
+# Listar infectados
+curl http://localhost:5000/api/files/infected
 ```
-Executa em background, monitorando continuamente e enviando alertas.
 
-### APIs REST
+### Uso Programático
 
-O dashboard expõe várias APIs para integração:
+```python
+from src.presentation.api.app_factory import create_app
+from src.infrastructure.scanners.clamav_scanner import ClamAVScanner
+from src.infrastructure.repositories.in_memory_file_scan_repository import InMemoryFileScanRepository
+from src.application.use_cases.scan_file_use_case import ScanFileUseCase
 
-- `GET /api/stats` - Estatísticas gerais (alertas, vírus, etc.)
-- `GET /api/alerts/recent` - Alertas recentes
-- `GET /api/phishing` - Alertas específicos de phishing
-- `GET /api/viruses` - Vírus detectados
-- `GET /api/files/scanned` - Arquivos escaneados
-- `POST /api/files/scan` - Escanear arquivo específico
+# Criar dependências
+scanner = ClamAVScanner()
+repo = InMemoryFileScanRepository()
+use_case = ScanFileUseCase(scanner, repo)
 
-Exemplo:
+# Escanear arquivo
+result = use_case.execute("/path/to/file.exe")
+print(f"Status: {result.status.value}")
+print(f"Infected: {result.is_infected()}")
+```
+
+## Estrutura do Projeto
+
+```
+ElizaSOC/
+├── src/                      # Código fonte (Clean Architecture)
+│   ├── domain/               # Camada de domínio (entities, interfaces)
+│   ├── application/         # Camada de aplicação (use cases)
+│   ├── infrastructure/      # Camada de infraestrutura (implementações)
+│   └── presentation/        # Camada de apresentação (API REST)
+├── tests/                    # Testes automatizados
+│   ├── domain/              # Testes de domínio
+│   ├── infrastructure/      # Testes de infraestrutura
+│   └── integration/         # Testes de integração
+├── docs/                     # Documentação completa
+├── scripts/                  # Scripts auxiliares
+├── templates/                # Templates HTML (legacy)
+├── static/                   # Arquivos estáticos (legacy)
+├── app_refactored.py         # API Refatorada (recomendado)
+├── app.py                    # API Legacy (compatibilidade)
+├── start.sh                  # Script de inicialização
+└── requirements.txt          # Dependências Python
+```
+
+## Módulos Implementados
+
+1. **Análise de Arquivos**: ClamAVScanner refatorado
+2. **SIEM/Correlação**: SimpleEventCorrelator
+3. **Threat Intelligence**: SimpleThreatIntelligenceService
+4. **Análise Comportamental**: SimpleBehavioralAnalyzer (ML)
+5. **Resposta Automatizada**: SimpleResponseAutomation
+
+## Testes
+
 ```bash
-curl http://localhost:5000/api/viruses
+# Todos os testes
+pytest
+
+# Com cobertura
+pytest --cov=src --cov-report=html
+
+# Testes específicos
+pytest tests/domain/
+pytest tests/integration/
 ```
 
-### Visualização ELK (Opcional)
-Acesse http://localhost:5601 para o Kibana.
+## Requisitos
 
-#### Configuração Inicial no Kibana
-1. Vá para Management > Index Patterns
-2. Crie padrão: `suricata-*`
-3. Time field: `@timestamp`
+- Python 3.10+
+- Flask 3.0+
+- ClamAV (opcional, para escaneamento)
+- scikit-learn (opcional, para análise comportamental ML)
 
-#### Visualizações Sugeridas
-- **Alertas por Tipo**: Pie chart de `alert.signature.keyword`
-- **Alertas ao Longo do Tempo**: Line chart de `@timestamp`
-- **IPs Suspeitos**: Table com `src_ip` e `dest_ip`
-- **Severidade**: Bar chart de `alert.severity`
+## Documentação
 
-## Estrutura de Arquivos
+Documentação completa disponível em `docs/`:
 
-```
-Monitoramento_Phishing_Suricata_Shell/
-├── app.py                           # Servidor Flask do dashboard
-├── clamav_scanner.py                # Módulo de escaneamento ClamAV
-├── monitorar_phishing_servico.sh    # Análise pontual de logs
-├── configurar_suricata.sh           # Configuração do Suricata
-├── configurar_clamav.sh             # Configuração do ClamAV
-├── alertas_email.sh                 # Sistema de alertas por e-mail
-├── auto_scan_files.sh               # Monitoramento automático de arquivos
-├── iniciar_dashboard_melhorado.sh   # Inicia dashboard com verificações
-├── testar_integracao_clamav.sh      # Script de teste completo
-├── templates/
-│   └── index.html                   # Interface web do dashboard
-├── static/
-│   ├── css/style.css                # Estilos do dashboard
-│   └── js/dashboard.js              # JavaScript do dashboard
-├── elastic_config/
-│   ├── logstash.conf                # Pipeline Logstash
-│   ├── elasticsearch.yml            # Config Elasticsearch
-│   └── kibana.yml                   # Config Kibana
-├── logs/
-│   ├── alertas_phishing.log         # Log local de alertas
-│   └── clamav_scans.log             # Log de escaneamentos
-├── quarantine/                      # Arquivos em quarentena
-├── requirements.txt                 # Dependências Python
-└── README.md                        # Esta documentação
-```
+- [docs/README.md](docs/README.md) - Índice da documentação
+- [docs/ARQUITETURA.md](docs/ARQUITETURA.md) - Arquitetura do sistema
+- [docs/INSTALACAO.md](docs/INSTALACAO.md) - Instalação detalhada
+- [docs/USO.md](docs/USO.md) - Guia de uso completo
 
-## Exemplo de Alerta
+## Compatibilidade
 
-```
-Assunto: [ALERTA SURICATA] Domínio suspeito detectado
+O sistema mantém compatibilidade com código antigo através de wrappers:
 
-Alerta de Phishing Detectado
+- `clamav_scanner.py` - Wrapper de compatibilidade
+- `app.py` - API legacy (mantida para compatibilidade)
 
-Data/Hora: 2023-10-31T12:45:30.123456-05:00
-Assinatura: ET MALWARE Suspicious Domain in DNS Lookup
-IP Origem: 192.168.1.100
-IP Destino: 8.8.8.8
-Severidade: 2
+## Desenvolvimento
 
-Este é um alerta automático gerado pelo sistema de monitoramento Suricata.
-Verifique os logs em /var/log/suricata/eve.json para mais detalhes.
+### Adicionar Novo Módulo
+
+1. **Domain**: Criar entidades e interfaces
+2. **Application**: Criar caso de uso
+3. **Infrastructure**: Implementar serviços/repositórios
+4. **Tests**: Escrever testes (TDD)
+5. **Presentation**: Criar controllers se necessário
+
+### Executar Localmente
+
+```bash
+# Desenvolvimento
+export FLASK_ENV=development
+python3 app_refactored.py
+
+# Produção
+export FLASK_ENV=production
+gunicorn -w 4 -b 0.0.0.0:5000 app_refactored:app
 ```
 
 ## Troubleshooting
 
-### Suricata não gera eve.json
-- Verifique se o serviço está ativo: `sudo systemctl status suricata`
-- Confirme configuração: `grep -A 10 "eve-log" /etc/suricata/suricata.yaml`
-- Reinicie: `sudo systemctl restart suricata`
-
-### E-mail não é enviado
-- Instale mailx: `sudo apt install mailutils`
-- Teste envio: `echo "Teste" | mailx -s "Teste" seuemail@dominio.com`
-- Verifique logs: `tail -f /var/log/mail.log`
-
-### ELK Stack não inicia
-- Verifique Java: `java -version`
-- Logs Elasticsearch: `sudo journalctl -u elasticsearch -f`
-- Logs Logstash: `sudo journalctl -u logstash -f`
-- Logs Kibana: `sudo journalctl -u kibana -f`
-
-### Permissões negadas
-- Execute scripts com sudo quando necessário
-- Verifique permissões dos arquivos de log: `ls -la /var/log/suricata/`
-
-## Logs e Rotação
-
-Os alertas são salvos em `logs/alertas_phishing.log`. Para rotação automática:
-
-Crie `/etc/logrotate.d/alertas_phishing`:
-```
-/home/usuario/Monitoramento_Phishing_Suricata_Shell/logs/alertas_phishing.log {
-    daily
-    rotate 7
-    compress
-    missingok
-    notifempty
-}
+### ClamAV não encontrado
+```bash
+sudo apt install -y clamav clamav-daemon
+sudo freshclam
 ```
 
-## Funcionalidades de Segurança
+### Erro de importação
+```bash
+pip install -r requirements.txt --force-reinstall
+```
 
-- ✅ **Ofuscação de IPs Privados**: IPs internos aparecem como `*.x` no dashboard
-- ✅ **CORS Configurado**: Apenas origens permitidas podem acessar as APIs
-- ✅ **Modo Produção**: Erros não expõem informações sensíveis
-- ✅ **Quarentena Automática**: Arquivos infectados são isolados automaticamente
+### Porta 5000 em uso
+```bash
+export FLASK_RUN_PORT=5001
+python3 app_refactored.py
+```
 
-## Documentação Adicional
+## Status dos Módulos
 
-- 📖 [DASHBOARD_README.md](DASHBOARD_README.md) - Guia completo do dashboard web
-- 📖 [GUIA_IMPLEMENTACAO_PASSO_A_PASSO.md](GUIA_IMPLEMENTACAO_PASSO_A_PASSO.md) - Implementação avançada
-- 📖 [ARQUITETURA_MONITORAMENTO_AVANCADO.md](ARQUITETURA_MONITORAMENTO_AVANCADO.md) - Arquitetura completa
-- 📖 [SECURITY.md](SECURITY.md) - Análise de segurança
-- 📖 [RESUMO_INTEGRACAO_CLAMAV.md](RESUMO_INTEGRACAO_CLAMAV.md) - Detalhes da integração ClamAV
+| Módulo | Status |
+|--------|--------|
+| Análise de Arquivos | Completo |
+| SIEM/Correlação | Completo |
+| Threat Intelligence | Completo (básico) |
+| Análise Comportamental | Completo |
+| Resposta Automatizada | Completo |
+| API REST | Completo |
+| Dashboard Web | Legacy (mantido) |
 
-## Créditos
+## Próximos Passos
 
-Desenvolvido por Wilker Junio Coelho Pimenta
+- Integração com feeds externos de Threat Intelligence
+- Repositórios persistentes (PostgreSQL/Elasticsearch)
+- Mensageria (RabbitMQ/Kafka)
+- Honeypots
+- Sandbox para análise dinâmica
 
 ## Licença
 
-Este projeto é distribuído sob a licença MIT. Veja LICENSE para detalhes.
+Distribuído sob a licença MIT.
+
+## Autor
+
+**Wilker Junio Coelho Pimenta**
+
+---
+
+Para mais informações, consulte a [documentação completa](docs/README.md).

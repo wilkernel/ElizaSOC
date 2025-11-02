@@ -13,7 +13,7 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>🛡️ Dashboard de Monitoramento - Suricata</h1>
+                <h1> Dashboard de Monitoramento - Suricata</h1>
                 <div class="status-indicator">
                     <span id="status-indicator" class="status-dot"></span>
                     <span id="status-text">Verificando...</span>
@@ -24,28 +24,28 @@
         <!-- Stats Cards -->
         <section class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon">📊</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <h3 id="total-alerts">0</h3>
                     <p>Total de Alertas</p>
                 </div>
             </div>
             <div class="stat-card phishing">
-                <div class="stat-icon">🚨</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <h3 id="phishing-alerts">0</h3>
                     <p>Alertas de Phishing</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🌐</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <h3 id="total-flows">0</h3>
                     <p>Conexões Monitoradas</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🔍</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <h3 id="total-dns">0</h3>
                     <p>Consultas DNS</p>
@@ -53,12 +53,59 @@
             </div>
         </section>
 
+        <!-- System Metrics -->
+        <section class="system-metrics">
+            <h2>Métricas do Sistema</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span>CPU Usage</span>
+                        <span id="cpu-value" class="metric-value">0%</span>
+                    </div>
+                    <div class="metric-bar">
+                        <div id="cpu-bar" class="metric-bar-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span>Memory Usage</span>
+                        <span id="memory-value" class="metric-value">0%</span>
+                    </div>
+                    <div class="metric-bar">
+                        <div id="memory-bar" class="metric-bar-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span>Log File Size</span>
+                        <span id="log-size" class="metric-value">0 MB</span>
+                    </div>
+                    <div class="metric-info">
+                        <span id="log-last-update">Sem atualização</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Real-Time Monitor Section -->
+        <section class="monitor-section">
+            <div class="monitor-container">
+                <div class="monitor-header">
+                    <h2>📊 Monitor em Tempo Real</h2>
+                    <div class="monitor-legend">
+                        <span class="legend-item"><span class="legend-color" style="background: #ef4444;"></span> Alertas</span>
+                        <span class="legend-item"><span class="legend-color" style="background: #10b981;"></span> Rede</span>
+                        <span class="legend-item"><span class="legend-color" style="background: #2563eb;"></span> Sistema</span>
+                    </div>
+                </div>
+                <div class="monitor-chart-wrapper">
+                    <canvas id="realTimeMonitorChart"></canvas>
+                </div>
+            </div>
+        </section>
+
         <!-- Charts Section -->
         <section class="charts-section">
-            <div class="chart-container">
-                <h2>Alertas por Hora (Últimas 24h)</h2>
-                <canvas id="alertsTimeChart"></canvas>
-            </div>
             <div class="chart-container">
                 <h2>Distribuição por Severidade</h2>
                 <canvas id="severityChart"></canvas>
@@ -71,6 +118,10 @@
                 <h2>Distribuição por Protocolo</h2>
                 <canvas id="protocolsChart"></canvas>
             </div>
+            <div class="chart-container">
+                <h2>Alertas por Hora (Últimas 24h)</h2>
+                <canvas id="alertsTimeChart"></canvas>
+            </div>
         </section>
 
         <!-- Tabs Section -->
@@ -79,6 +130,9 @@
                 <button class="tab-button active" onclick="switchTab('alerts')">Todos os Alertas</button>
                 <button class="tab-button" onclick="switchTab('phishing')">Alertas de Phishing</button>
                 <button class="tab-button" onclick="switchTab('logs')">Logs em Tempo Real</button>
+                <button class="tab-button" onclick="switchTab('services')">Controle de Serviços</button>
+                <button class="tab-button" onclick="switchTab('validation')">Validação de Dados</button>
+                <button class="tab-button" onclick="switchTab('protocols')">Protocolos Monitorados</button>
             </div>
 
             <!-- Alertas Tab -->
@@ -136,6 +190,365 @@
                         <button id="clear-logs" class="btn btn-danger">Limpar</button>
                     </div>
                     <div id="logs-output" class="logs-output"></div>
+                </div>
+            </div>
+
+            <!-- Services Tab -->
+            <div id="services-tab" class="tab-content">
+                <div class="services-container">
+                    <div class="service-list">
+                        <div class="service-item">
+                            <div class="service-info">
+                                <div class="service-name">
+                                    <span class="service-icon">🛡️</span>
+                                    <div>
+                                        <h3>Suricata IDS</h3>
+                                        <p>Intrusion Detection System</p>
+                                    </div>
+                                </div>
+                                <div class="service-status">
+                                    <span id="suricata-status" class="status-badge">Verificando...</span>
+                                </div>
+                            </div>
+                            <div class="service-actions">
+                                <button id="suricata-start" class="btn btn-success" disabled>Iniciar</button>
+                                <button id="suricata-stop" class="btn btn-danger" disabled>Parar</button>
+                                <button id="suricata-restart" class="btn btn-warning" disabled>Reiniciar</button>
+                            </div>
+                        </div>
+
+                        <div class="service-item">
+                            <div class="service-info">
+                                <div class="service-name">
+                                    <span class="service-icon">🔍</span>
+                                    <div>
+                                        <h3>ClamAV</h3>
+                                        <p>Antivirus Engine</p>
+                                    </div>
+                                </div>
+                                <div class="service-status">
+                                    <span id="clamav-status" class="status-badge">Verificando...</span>
+                                </div>
+                            </div>
+                            <div class="service-actions">
+                                <button id="clamav-start" class="btn btn-success" disabled>Iniciar</button>
+                                <button id="clamav-stop" class="btn btn-danger" disabled>Parar</button>
+                                <button id="clamav-update" class="btn btn-info" disabled>Atualizar DB</button>
+                            </div>
+                        </div>
+
+                        <div class="service-item">
+                            <div class="service-info">
+                                <div class="service-name">
+                                    <span class="service-icon">📊</span>
+                                    <div>
+                                        <h3>ElizaSOC Dashboard</h3>
+                                        <p>Web Interface</p>
+                                    </div>
+                                </div>
+                                <div class="service-status">
+                                    <span class="status-badge status-active">Online</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Tab -->
+            <div id="validation-tab" class="tab-content">
+                <div class="validation-container">
+                    <div class="validation-header">
+                        <h2>✅ Origem dos Dados</h2>
+                        <p>Confirmação de que os dados exibidos são 100% reais</p>
+                    </div>
+                    
+                    <div class="validation-section">
+                        <h3>📊 Evidências</h3>
+                        <div class="evidence-grid">
+                            <div class="evidence-card">
+                                <div class="evidence-icon">📁</div>
+                                <h4>Arquivo eve.json</h4>
+                                <p id="eve-file-status">Carregando...</p>
+                            </div>
+                            <div class="evidence-card">
+                                <div class="evidence-icon">🛡️</div>
+                                <h4>Suricata Status</h4>
+                                <p id="suricata-validation-status">Carregando...</p>
+                            </div>
+                            <div class="evidence-card">
+                                <div class="evidence-icon">🔍</div>
+                                <h4>Alertas Detectados</h4>
+                                <p id="alert-validation-status">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="validation-section">
+                        <h3>ℹ️ Método de Processamento</h3>
+                        <ul class="validation-list">
+                            <li>✓ Lidos diretamente do arquivo <code>/var/log/suricata/eve.json</code></li>
+                            <li>✓ Gerados pelo Suricata IDS em tempo real</li>
+                            <li>✓ Processados pela função <code>parse_eve_json()</code> no backend</li>
+                            <li>✓ Exibidos sem modificação (apenas IPs privados mascarados)</li>
+                        </ul>
+                    </div>
+
+                    <div class="validation-section">
+                        <h3>🔍 Informações Técnicas</h3>
+                        <div class="tech-info-grid" id="tech-info-container">
+                            <div class="tech-info-item">
+                                <strong>Tamanho do Log:</strong>
+                                <span id="log-size-validation">-</span>
+                            </div>
+                            <div class="tech-info-item">
+                                <strong>Última Atualização:</strong>
+                                <span id="last-update-validation">-</span>
+                            </div>
+                            <div class="tech-info-item">
+                                <strong>Total de Alertas:</strong>
+                                <span id="total-alerts-validation">-</span>
+                            </div>
+                            <div class="tech-info-item">
+                                <strong>Tipos de Assinaturas:</strong>
+                                <span id="signatures-types-validation">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="validation-note">
+                        <h3>📝 Nota Importante</h3>
+                        <p>Todo o dashboard usa dados REAIS do Suricata. Não há mocks ou dados simulados. Todas as métricas são calculadas a partir dos logs reais e os gráficos refletem eventos reais de segurança.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Protocols Tab -->
+            <div id="protocols-tab" class="tab-content">
+                <div class="protocols-container">
+                    <div class="protocols-header">
+                        <h2>🔹 Protocolos Monitorados</h2>
+                        <p>Categorias de protocolos analisados pelo sistema</p>
+                    </div>
+
+                    <div class="protocol-category">
+                        <h3>Transporte</h3>
+                        <div class="protocol-grid">
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">📡</span>
+                                    <strong>TCP</strong>
+                                </div>
+                                <p class="protocol-desc">Transmission Control Protocol</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> DDoS, varreduras, tunneling
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+                            
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">📦</span>
+                                    <strong>UDP</strong>
+                                </div>
+                                <p class="protocol-desc">User Datagram Protocol (DNS, DHCP, SNMP, NTP, VoIP)</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> DDoS, amplificação, exfiltração
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">📊</span>
+                                    <strong>ICMP</strong>
+                                </div>
+                                <p class="protocol-desc">Internet Control Message Protocol</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> Varreduras, tunneling, DoS
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="protocol-category">
+                        <h3>Aplicação</h3>
+                        <div class="protocol-grid">
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">🌐</span>
+                                    <strong>HTTP/HTTPS</strong>
+                                </div>
+                                <p class="protocol-desc">HyperText Transfer Protocol (80/443)</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> Phishing, C2, malware
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">📧</span>
+                                    <strong>SMTP/POP3/IMAP</strong>
+                                </div>
+                                <p class="protocol-desc">Protocolos de Email</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> Phishing, malware, spam
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">🌍</span>
+                                    <strong>DNS</strong>
+                                </div>
+                                <p class="protocol-desc">Domain Name System</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> Phishing, tunneling, exfiltração
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">📁</span>
+                                    <strong>FTP/SFTP</strong>
+                                </div>
+                                <p class="protocol-desc">File Transfer Protocol</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> Exfiltração, acesso não autorizado
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">💻</span>
+                                    <strong>SSH</strong>
+                                </div>
+                                <p class="protocol-desc">Secure Shell (22)</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> Brute force, tunneling
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">🖥️</span>
+                                    <strong>RDP</strong>
+                                </div>
+                                <p class="protocol-desc">Remote Desktop Protocol (3389)</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> Brute force, acesso remoto
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">📊</span>
+                                    <strong>SMB/NetBIOS</strong>
+                                </div>
+                                <p class="protocol-desc">Server Message Block</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> Ransomware, movimentação lateral
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="protocol-category">
+                        <h3>Infraestrutura</h3>
+                        <div class="protocol-grid">
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">🔧</span>
+                                    <strong>DHCP</strong>
+                                </div>
+                                <p class="protocol-desc">Dynamic Host Configuration</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> Rogue DHCP, redirecionamento
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">⏰</span>
+                                    <strong>NTP</strong>
+                                </div>
+                                <p class="protocol-desc">Network Time Protocol</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> Amplificação DDoS
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+
+                            <div class="protocol-card">
+                                <div class="protocol-title">
+                                    <span class="protocol-icon">🔐</span>
+                                    <strong>LDAP/Kerberos</strong>
+                                </div>
+                                <p class="protocol-desc">Autenticação e Diretórios</p>
+                                <div class="protocol-risks">
+                                    <strong>Riscos:</strong> Escalonamento de privilégios
+                                </div>
+                                <div class="protocol-monitoring">
+                                    <span class="monitor-badge">Monitorado</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="protocols-summary">
+                        <h3>📊 Resumo</h3>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <div class="summary-value" id="total-protocols">14+</div>
+                                <div class="summary-label">Protocolos Monitorados</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value" id="transport-protocols">3</div>
+                                <div class="summary-label">Transporte</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value" id="application-protocols">7</div>
+                                <div class="summary-label">Aplicação</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value" id="infrastructure-protocols">4+</div>
+                                <div class="summary-label">Infraestrutura</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
