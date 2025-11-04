@@ -596,12 +596,28 @@ function startLogs() {
     
     logsEventSource = new EventSource('/api/logs/stream');
     
+    logsEventSource.onopen = function(event) {
+        console.log('Conexão com stream de logs estabelecida');
+    };
+    
     logsEventSource.onmessage = function(event) {
         try {
             const data = JSON.parse(event.data);
             
+            // Verificar tipo de mensagem
+            if (data.type === 'connection') {
+                logsOutput.innerHTML = `<div class="log-entry">✓ ${escapeHtml(data.message)}</div>`;
+                return;
+            }
+            
+            if (data.type === 'heartbeat') {
+                // Heartbeat - apenas atualizar timestamp se necessário
+                return;
+            }
+            
             if (data.error) {
-                logsOutput.innerHTML += `<div class="log-entry">Erro: ${escapeHtml(data.error)}</div>`;
+                logsOutput.innerHTML += `<div class="log-entry" style="color: var(--danger-color);">⚠ Erro: ${escapeHtml(data.error)}</div>`;
+                logsOutput.scrollTop = logsOutput.scrollHeight;
                 return;
             }
             
@@ -628,12 +644,18 @@ function startLogs() {
             }
         } catch (error) {
             console.error('Erro ao processar log:', error);
+            console.error('Dados recebidos:', event.data);
         }
     };
     
     logsEventSource.onerror = function(error) {
         console.error('Erro no EventSource:', error);
-        logsOutput.innerHTML += '<div class="log-entry">Erro na conexão. Tentando reconectar...</div>';
+        // Se o estado for CONNECTING, ainda está tentando conectar
+        if (logsEventSource.readyState === EventSource.CONNECTING) {
+            logsOutput.innerHTML = '<div class="log-entry">Conectando ao stream de logs...</div>';
+        } else if (logsEventSource.readyState === EventSource.CLOSED) {
+            logsOutput.innerHTML += '<div class="log-entry" style="color: var(--danger-color);">Conexão fechada. Clique em "Iniciar Monitoramento" novamente.</div>';
+        }
     };
     
     document.getElementById('start-logs').disabled = true;
@@ -847,6 +869,321 @@ async function updateValidationData() {
     } catch (error) {
         console.error('Erro ao atualizar dados de validação:', error);
     }
+}
+
+// Protocol Details Modal
+let protocolCharts = {};
+
+function showProtocolDetails(protocol) {
+    const modal = document.getElementById('protocol-modal');
+    const loading = document.getElementById('protocol-loading');
+    const content = document.getElementById('protocol-content');
+    const title = document.getElementById('protocol-modal-title');
+    
+    // Limpar conteúdo anterior e resetar estado
+    loading.innerHTML = '<p>Carregando dados do protocolo...</p>';
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    
+    // Mostrar modal
+    modal.classList.add('active');
+    title.textContent = `Detalhes: ${protocol}`;
+    
+    // Fechar modal ao clicar fora
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            closeProtocolModal();
+        }
+    };
+    
+    // Pequeno delay para garantir que o modal está visível antes de carregar
+    setTimeout(() => {
+        loadProtocolData(protocol);
+    }, 100);
+}
+
+function closeProtocolModal() {
+    const modal = document.getElementById('protocol-modal');
+    modal.classList.remove('active');
+    
+    // Destruir gráficos
+    if (protocolCharts.severityChart) {
+        protocolCharts.severityChart.destroy();
+        protocolCharts.severityChart = null;
+    }
+    if (protocolCharts.timeChart) {
+        protocolCharts.timeChart.destroy();
+        protocolCharts.timeChart = null;
+    }
+}
+
+async function loadProtocolData(protocol) {
+    const loading = document.getElementById('protocol-loading');
+    const content = document.getElementById('protocol-content');
+    
+    try {
+        // Codificar o protocolo para URL
+        const protocolEncoded = encodeURIComponent(protocol);
+        const response = await fetch(`/api/protocols/${protocolEncoded}`);
+        
+        // Verificar se a resposta é OK
+        if (!response.ok) {
+            let errorMessage = `Erro HTTP ${response.status}`;
+            try {
+                const errorText = await response.text();
+                // Tentar parsear como JSON primeiro
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMessage = errorJson.error || errorMessage;
+                } catch {
+                    // Se não for JSON, usar o texto (limitado)
+                    if (errorText.length > 0 && !errorText.startsWith('<')) {
+                        errorMessage = `${errorMessage}: ${errorText.substring(0, 100)}`;
+                    }
+                }
+            } catch (e) {
+                // Ignorar erro ao ler resposta
+            }
+            throw new Error(errorMessage);
+        }
+        
+        // Verificar se o conteúdo é JSON e ler o texto
+        const contentType = response.headers.get('content-type') || '';
+        const text = await response.text();
+        
+        if (!contentType.includes('application/json')) {
+            // Se começar com <, é HTML (página de erro)
+            if (text.trim().startsWith('<')) {
+                throw new Error('Servidor retornou página HTML em vez de JSON. Verifique se a rota está correta.');
+            }
+            throw new Error(`Resposta não é JSON. Tipo recebido: ${contentType || 'desconhecido'}`);
+        }
+        
+        // Fazer parse do JSON
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (parseError) {
+            console.error('Erro ao fazer parse do JSON:', parseError);
+            console.error('Conteúdo recebido:', text.substring(0, 500));
+            throw new Error('Resposta do servidor não é um JSON válido');
+        }
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Atualizar estatísticas
+        document.getElementById('protocol-total-alerts').textContent = data.total_alerts.toLocaleString();
+        document.getElementById('protocol-phishing-alerts').textContent = data.phishing_alerts.toLocaleString();
+        document.getElementById('protocol-total-flows').textContent = data.total_flows.toLocaleString();
+        document.getElementById('protocol-monitored-by').textContent = data.monitored_by || 'Suricata IDS';
+        
+        // Atualizar gráficos
+        updateProtocolSeverityChart(data.severity_distribution);
+        updateProtocolTimeChart(data.alerts_by_hour);
+        
+        // Atualizar tabelas
+        updateProtocolSignaturesTable(data.top_signatures);
+        updateProtocolSrcIPsTable(data.top_src_ips);
+        updateProtocolRecentAlertsTable(data.recent_alerts);
+        
+        // Mostrar conteúdo, esconder loading
+        loading.style.display = 'none';
+        content.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Erro ao carregar dados do protocolo:', error);
+        console.error('Protocolo:', protocol);
+        
+        // Mostrar erro de forma mais amigável
+        loading.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <p style="color: var(--danger-color); margin-bottom: 12px; font-weight: 600;">
+                    Erro ao carregar dados do protocolo
+                </p>
+                <p style="color: var(--text-secondary); font-size: 13px;">
+                    ${escapeHtml(error.message)}
+                </p>
+                <p style="color: var(--text-secondary); font-size: 12px; margin-top: 12px;">
+                    Verifique o console do navegador para mais detalhes.
+                </p>
+            </div>
+        `;
+        loading.style.display = 'block';
+        content.style.display = 'none';
+    }
+}
+
+function updateProtocolSeverityChart(data) {
+    const ctx = document.getElementById('protocol-severity-chart');
+    if (!ctx) return;
+    
+    // Destruir gráfico anterior se existir
+    if (protocolCharts.severityChart) {
+        protocolCharts.severityChart.destroy();
+    }
+    
+    const labels = Object.keys(data).map(s => `Severidade ${s}`);
+    const values = Object.values(data);
+    const colors = ['#ef4444', '#f59e0b', '#eab308', '#10b981'];
+    
+    protocolCharts.severityChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#94a3b8',
+                        padding: 15
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateProtocolTimeChart(data) {
+    const ctx = document.getElementById('protocol-time-chart');
+    if (!ctx) return;
+    
+    // Destruir gráfico anterior se existir
+    if (protocolCharts.timeChart) {
+        protocolCharts.timeChart.destroy();
+    }
+    
+    const labels = Object.keys(data).sort();
+    const values = labels.map(label => data[label] || 0);
+    
+    protocolCharts.timeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels.map(l => {
+                const date = new Date(l);
+                return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            }),
+            datasets: [{
+                label: 'Alertas',
+                data: values,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#94a3b8'
+                    },
+                    grid: {
+                        color: '#334155'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#94a3b8'
+                    },
+                    grid: {
+                        color: '#334155'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateProtocolSignaturesTable(data) {
+    const tbody = document.getElementById('protocol-signatures-table');
+    tbody.innerHTML = '';
+    
+    if (!data || Object.keys(data).length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2">Nenhuma assinatura encontrada</td></tr>';
+        return;
+    }
+    
+    const sorted = Object.entries(data)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+    
+    sorted.forEach(([signature, count]) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${escapeHtml(signature.length > 50 ? signature.substring(0, 50) + '...' : signature)}</td>
+            <td>${count}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateProtocolSrcIPsTable(data) {
+    const tbody = document.getElementById('protocol-src-ips-table');
+    tbody.innerHTML = '';
+    
+    if (!data || Object.keys(data).length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2">Nenhum IP encontrado</td></tr>';
+        return;
+    }
+    
+    const sorted = Object.entries(data)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+    
+    sorted.forEach(([ip, count]) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${escapeHtml(ip)}</td>
+            <td>${count}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateProtocolRecentAlertsTable(alerts) {
+    const tbody = document.getElementById('protocol-recent-alerts-table');
+    tbody.innerHTML = '';
+    
+    if (!alerts || alerts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5">Nenhum alerta recente encontrado</td></tr>';
+        return;
+    }
+    
+    alerts.forEach(alert => {
+        const row = document.createElement('tr');
+        const timestamp = new Date(alert.timestamp).toLocaleString('pt-BR');
+        const severity = alert.severity || 0;
+        const severityClass = severity >= 3 ? 'severity-high' : severity >= 2 ? 'severity-medium' : 'severity-low';
+        
+        row.innerHTML = `
+            <td>${timestamp}</td>
+            <td>${escapeHtml(alert.signature || 'N/A')}</td>
+            <td>${escapeHtml(alert.src_ip || 'N/A')}</td>
+            <td>${escapeHtml(alert.dest_ip || 'N/A')}</td>
+            <td class="${severityClass}">${severity}</td>
+        `;
+        tbody.appendChild(row);
+    });
 }
 
 

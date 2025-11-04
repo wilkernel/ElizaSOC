@@ -257,9 +257,6 @@ def register_dashboard_routes(bp: Blueprint):
         """Stream de logs em tempo real"""
         def generate():
             file_path = EVE_JSON_PATH
-            if not os.path.exists(file_path):
-                yield f"data: {json.dumps({'error': 'Arquivo não encontrado'})}\n\n"
-                return
             
             # Função para sanitizar dados do log
             def sanitize_log_data(data):
@@ -273,33 +270,87 @@ def register_dashboard_routes(bp: Blueprint):
                     return sanitized
                 return data
             
-            # Ler última posição
+            # Verificar se arquivo existe
+            if not os.path.exists(file_path):
+                yield f"data: {json.dumps({'error': f'Arquivo não encontrado: {file_path}'})}\n\n"
+                # Enviar heartbeat mesmo com erro
+                time.sleep(5)
+                yield f"data: {json.dumps({'type': 'heartbeat', 'message': 'Aguardando arquivo...'})}\n\n"
+                return
+            
+            # Enviar mensagem de conexão estabelecida
+            yield f"data: {json.dumps({'type': 'connection', 'message': 'Conectado ao stream de logs'})}\n\n"
+            
+            # Ler última posição do arquivo
+            last_position = 0
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     f.seek(0, 2)  # Ir para o final do arquivo
-                
-                while True:
-                    try:
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            f.seek(0, 2)
-                            while True:
-                                line = f.readline()
-                                if line:
-                                    try:
-                                        data = json.loads(line.strip())
-                                        if data.get('event_type') == 'alert':
-                                            sanitized_data = sanitize_log_data(data)
-                                            yield f"data: {json.dumps(sanitized_data)}\n\n"
-                                    except:
-                                        pass
-                                else:
-                                    time.sleep(1)
-                    except:
-                        time.sleep(5)
+                    last_position = f.tell()
             except:
-                yield f"data: {json.dumps({'error': 'Erro ao ler arquivo'})}\n\n"
+                pass
+            
+            heartbeat_counter = 0
+            
+            while True:
+                try:
+                    if not os.path.exists(file_path):
+                        yield f"data: {json.dumps({'error': 'Arquivo não encontrado'})}\n\n"
+                        time.sleep(5)
+                        continue
+                    
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        # Ir para última posição conhecida
+                        f.seek(last_position)
+                        
+                        # Ler novas linhas
+                        new_lines = False
+                        while True:
+                            line = f.readline()
+                            if not line:
+                                break
+                            
+                            new_lines = True
+                            last_position = f.tell()
+                            
+                            try:
+                                data = json.loads(line.strip())
+                                if data.get('event_type') == 'alert':
+                                    sanitized_data = sanitize_log_data(data)
+                                    yield f"data: {json.dumps(sanitized_data)}\n\n"
+                            except json.JSONDecodeError:
+                                # Ignorar linhas inválidas
+                                continue
+                            except Exception as e:
+                                # Log erro mas continue
+                                continue
+                        
+                        # Se não há novas linhas, enviar heartbeat a cada 10 iterações
+                        if not new_lines:
+                            heartbeat_counter += 1
+                            if heartbeat_counter >= 10:
+                                yield f"data: {json.dumps({'type': 'heartbeat', 'timestamp': datetime.now().isoformat()})}\n\n"
+                                heartbeat_counter = 0
+                    
+                    # Pequeno delay antes de verificar novamente
+                    time.sleep(0.5)
+                    
+                except PermissionError:
+                    yield f"data: {json.dumps({'error': 'Sem permissão para ler arquivo'})}\n\n"
+                    time.sleep(5)
+                except Exception as e:
+                    yield f"data: {json.dumps({'error': f'Erro ao ler arquivo: {str(e)}'})}\n\n"
+                    time.sleep(5)
         
-        return Response(generate(), mimetype='text/event-stream')
+        return Response(
+            generate(),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no',
+                'Connection': 'keep-alive'
+            }
+        )
     
     @bp.route('/api/status')
     def api_status_dashboard():
@@ -327,6 +378,135 @@ def register_dashboard_routes(bp: Blueprint):
                 'eve_json_exists': file_exists,
                 'eve_json_size': file_size,
                 'eve_json_modified': file_modified,
+                'timestamp': datetime.now().isoformat()
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    @bp.route('/api/protocols/<path:protocol>')
+    def api_protocol_stats(protocol):
+        """API para estatísticas de um protocolo específico"""
+        try:
+            # Decodificar o protocolo da URL (caso tenha sido codificado)
+            import urllib.parse
+            protocol = urllib.parse.unquote(protocol)
+            # Normalizar nome do protocolo
+            protocol = protocol.upper()
+            
+            # Mapear protocolos compostos para busca no Suricata
+            protocol_mapping = {
+                'HTTP/HTTPS': ['HTTP', 'TCP'],  # Buscar HTTP explicitamente ou TCP nas portas 80/443
+                'SMTP/POP3/IMAP': ['SMTP', 'POP3', 'IMAP'],
+                'FTP/SFTP': ['FTP'],
+                'SMB/NETBIOS': ['SMB'],
+                'LDAP/KERBEROS': ['LDAP', 'KERBEROS'],
+            }
+            
+            # Protocolos e portas associadas
+            port_mapping = {
+                'HTTP/HTTPS': [80, 443],
+                'SSH': [22],
+                'RDP': [3389],
+                'FTP': [21],
+                'SMTP': [25],
+                'POP3': [110],
+                'IMAP': [143],
+            }
+            
+            # Buscar alertas e flows do protocolo
+            alerts, flows, dns_queries = parse_eve_json(EVE_JSON_PATH, limit=100000)
+            
+            # Filtrar por protocolo
+            protocol_alerts = []
+            protocol_flows = []
+            
+            # Se é um protocolo mapeado, buscar por múltiplos nomes
+            search_protocols = protocol_mapping.get(protocol, [protocol])
+            target_ports = port_mapping.get(protocol, [])
+            
+            for alert in alerts:
+                alert_proto = alert.get('proto', '').upper()
+                alert_port = alert.get('dest_port', 0) or alert.get('src_port', 0)
+                
+                # Verificar se corresponde ao protocolo
+                matches = False
+                
+                # Verificar se o protocolo está na lista de busca
+                if alert_proto in search_protocols:
+                    matches = True
+                # Verificar se a porta corresponde (para HTTP/HTTPS, SSH, RDP, etc)
+                elif target_ports and alert_port in target_ports:
+                    matches = True
+                # Verificar se é o protocolo exato (para casos onde não está mapeado)
+                elif protocol not in protocol_mapping and alert_proto == protocol:
+                    matches = True
+                
+                if matches:
+                    protocol_alerts.append(alert)
+            
+            # Filtrar flows
+            for flow in flows:
+                flow_proto = flow.get('proto', '').upper()
+                flow_port = flow.get('dest_port', 0) or flow.get('src_port', 0)
+                
+                matches = False
+                if flow_proto in search_protocols:
+                    matches = True
+                elif target_ports and flow_port in target_ports:
+                    matches = True
+                elif protocol not in protocol_mapping and flow_proto == protocol:
+                    matches = True
+                
+                if matches:
+                    protocol_flows.append(flow)
+            
+            # Filtrar DNS se for DNS
+            protocol_dns = []
+            if protocol == 'DNS':
+                protocol_dns = dns_queries[:1000]  # Limitar DNS
+            
+            # Calcular estatísticas
+            total_alerts = len(protocol_alerts)
+            phishing_alerts = sum(1 for a in protocol_alerts if a.get('is_phishing', False))
+            severity_dist = Counter(a.get('severity', 0) for a in protocol_alerts)
+            top_signatures = Counter(a.get('signature', 'Unknown') for a in protocol_alerts)
+            top_src_ips = Counter(mask_ip(a.get('src_ip', 'Unknown')) for a in protocol_alerts if a.get('src_ip'))
+            top_dest_ips = Counter(mask_ip(a.get('dest_ip', 'Unknown')) for a in protocol_alerts if a.get('dest_ip'))
+            
+            # Alertas por hora
+            alerts_by_hour = defaultdict(int)
+            for alert in protocol_alerts:
+                try:
+                    dt = datetime.fromisoformat(alert['timestamp'].replace('Z', '+00:00'))
+                    hour_key = dt.strftime('%Y-%m-%d %H:00')
+                    alerts_by_hour[hour_key] += 1
+                except:
+                    pass
+            
+            # Últimas 24 horas
+            now = datetime.now()
+            hours_24 = {}
+            for i in range(24):
+                hour = now - timedelta(hours=i)
+                hour_key = hour.strftime('%Y-%m-%d %H:00')
+                hours_24[hour_key] = alerts_by_hour.get(hour_key, 0)
+            
+            # Ordenar alertas recentes (últimos 50)
+            recent_alerts = sorted(protocol_alerts, key=lambda x: x.get('timestamp', ''), reverse=True)[:50]
+            
+            return jsonify({
+                'protocol': protocol,
+                'total_alerts': total_alerts,
+                'phishing_alerts': phishing_alerts,
+                'total_flows': len(protocol_flows),
+                'total_dns': len(protocol_dns),
+                'severity_distribution': dict(severity_dist),
+                'top_signatures': dict(top_signatures.most_common(10)),
+                'top_src_ips': dict(top_src_ips.most_common(10)),
+                'top_dest_ips': dict(top_dest_ips.most_common(10)),
+                'alerts_by_hour': dict(sorted(hours_24.items())),
+                'recent_alerts': recent_alerts,
+                'monitored_by': 'Suricata IDS',
                 'timestamp': datetime.now().isoformat()
             })
         except Exception as e:

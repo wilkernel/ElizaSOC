@@ -329,12 +329,13 @@
                     <div class="protocols-header">
                         <h2>🔹 Protocolos Monitorados</h2>
                         <p>Categorias de protocolos analisados pelo sistema</p>
+                        <p class="monitoring-service-info">🛡️ Monitorado pelo <strong>Suricata IDS</strong></p>
                     </div>
 
                     <div class="protocol-category">
                         <h3>Transporte</h3>
                         <div class="protocol-grid">
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="TCP" onclick="showProtocolDetails('TCP')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">📡</span>
                                     <strong>TCP</strong>
@@ -348,7 +349,7 @@
                                 </div>
                             </div>
                             
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="UDP" onclick="showProtocolDetails('UDP')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">📦</span>
                                     <strong>UDP</strong>
@@ -362,7 +363,7 @@
                                 </div>
                             </div>
 
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="ICMP" onclick="showProtocolDetails('ICMP')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">📊</span>
                                     <strong>ICMP</strong>
@@ -381,7 +382,7 @@
                     <div class="protocol-category">
                         <h3>Aplicação</h3>
                         <div class="protocol-grid">
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="HTTP/HTTPS" onclick="showProtocolDetails('HTTP/HTTPS')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">🌐</span>
                                     <strong>HTTP/HTTPS</strong>
@@ -395,7 +396,7 @@
                                 </div>
                             </div>
 
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="SMTP/POP3/IMAP" onclick="showProtocolDetails('SMTP/POP3/IMAP')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">📧</span>
                                     <strong>SMTP/POP3/IMAP</strong>
@@ -409,7 +410,7 @@
                                 </div>
                             </div>
 
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="DNS" onclick="showProtocolDetails('DNS')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">🌍</span>
                                     <strong>DNS</strong>
@@ -423,7 +424,7 @@
                                 </div>
                             </div>
 
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="FTP/SFTP" onclick="showProtocolDetails('FTP/SFTP')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">📁</span>
                                     <strong>FTP/SFTP</strong>
@@ -437,7 +438,7 @@
                                 </div>
                             </div>
 
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="SSH" onclick="showProtocolDetails('SSH')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">💻</span>
                                     <strong>SSH</strong>
@@ -451,7 +452,7 @@
                                 </div>
                             </div>
 
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="RDP" onclick="showProtocolDetails('RDP')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">🖥️</span>
                                     <strong>RDP</strong>
@@ -465,7 +466,7 @@
                                 </div>
                             </div>
 
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="SMB/NETBIOS" onclick="showProtocolDetails('SMB/NETBIOS')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">📊</span>
                                     <strong>SMB/NetBIOS</strong>
@@ -484,7 +485,7 @@
                     <div class="protocol-category">
                         <h3>Infraestrutura</h3>
                         <div class="protocol-grid">
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="DHCP" onclick="showProtocolDetails('DHCP')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">🔧</span>
                                     <strong>DHCP</strong>
@@ -498,7 +499,7 @@
                                 </div>
                             </div>
 
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="NTP" onclick="showProtocolDetails('NTP')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">⏰</span>
                                     <strong>NTP</strong>
@@ -512,7 +513,7 @@
                                 </div>
                             </div>
 
-                            <div class="protocol-card">
+                            <div class="protocol-card clickable" data-protocol="LDAP/KERBEROS" onclick="showProtocolDetails('LDAP/KERBEROS')">
                                 <div class="protocol-title">
                                     <span class="protocol-icon">🔐</span>
                                     <strong>LDAP/Kerberos</strong>
@@ -552,6 +553,105 @@
                 </div>
             </div>
         </section>
+    </div>
+
+    <!-- Modal de Detalhes do Protocolo -->
+    <div id="protocol-modal" class="protocol-modal">
+        <div class="protocol-modal-content">
+            <div class="protocol-modal-header">
+                <h2 id="protocol-modal-title">Detalhes do Protocolo</h2>
+                <button class="protocol-modal-close" onclick="closeProtocolModal()">&times;</button>
+            </div>
+            <div class="protocol-modal-body">
+                <div id="protocol-loading" class="protocol-loading">
+                    <p>Carregando dados do protocolo...</p>
+                </div>
+                <div id="protocol-content" style="display: none;">
+                    <div class="protocol-stats-grid">
+                        <div class="protocol-stat-card">
+                            <div class="protocol-stat-value" id="protocol-total-alerts">0</div>
+                            <div class="protocol-stat-label">Total de Alertas</div>
+                        </div>
+                        <div class="protocol-stat-card">
+                            <div class="protocol-stat-value" id="protocol-phishing-alerts">0</div>
+                            <div class="protocol-stat-label">Alertas de Phishing</div>
+                        </div>
+                        <div class="protocol-stat-card">
+                            <div class="protocol-stat-value" id="protocol-total-flows">0</div>
+                            <div class="protocol-stat-label">Conexões</div>
+                        </div>
+                        <div class="protocol-stat-card">
+                            <div class="protocol-stat-value" id="protocol-monitored-by">-</div>
+                            <div class="protocol-stat-label">Monitorado por</div>
+                        </div>
+                    </div>
+
+                    <div class="protocol-charts-section">
+                        <div class="protocol-chart-container">
+                            <h3>Distribuição por Severidade</h3>
+                            <canvas id="protocol-severity-chart"></canvas>
+                        </div>
+                        <div class="protocol-chart-container">
+                            <h3>Alertas por Hora (Últimas 24h)</h3>
+                            <canvas id="protocol-time-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="protocol-tables-section">
+                        <div class="protocol-table-container">
+                            <h3>Top 10 Assinaturas</h3>
+                            <div class="protocol-table-wrapper">
+                                <table class="protocol-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Assinatura</th>
+                                            <th>Ocorrências</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="protocol-signatures-table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="protocol-table-container">
+                            <h3>Top 10 IPs de Origem</h3>
+                            <div class="protocol-table-wrapper">
+                                <table class="protocol-table">
+                                    <thead>
+                                        <tr>
+                                            <th>IP Origem</th>
+                                            <th>Ocorrências</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="protocol-src-ips-table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="protocol-recent-alerts">
+                        <h3>Alertas Recentes</h3>
+                        <div class="protocol-table-wrapper">
+                            <table class="protocol-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Assinatura</th>
+                                        <th>IP Origem</th>
+                                        <th>IP Destino</th>
+                                        <th>Severidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="protocol-recent-alerts-table">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
