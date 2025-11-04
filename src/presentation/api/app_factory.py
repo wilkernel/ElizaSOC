@@ -6,6 +6,9 @@ import os
 from flask import Flask, render_template
 from flask_cors import CORS
 
+from src.common.config import config
+from src.common.logging import get_logger
+
 from src.infrastructure.scanners.clamav_scanner import ClamAVScanner
 from src.infrastructure.repositories.in_memory_alert_repository import InMemoryAlertRepository
 from src.infrastructure.repositories.in_memory_file_scan_repository import InMemoryFileScanRepository
@@ -22,41 +25,46 @@ from src.presentation.api.controllers.alerts_controller import alerts_bp, regist
 from src.presentation.api.controllers.files_controller import files_bp, register_files_routes
 from src.presentation.api.controllers.dashboard_controller import dashboard_bp, register_dashboard_routes
 
+logger = get_logger(__name__)
 
-def create_app(config=None):
+
+def create_app(flask_config=None):
     """
     Factory para criar aplicação Flask com injeção de dependências
     
     Args:
-        config: Dicionário de configuração (opcional)
+        flask_config: Dicionário de configuração Flask (opcional)
         
     Returns:
         Flask app configurada
     """
-    # Determinar diretório raiz do projeto (está em ElizaSOC/)
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    # Determinar diretório raiz do projeto
+    base_dir = config.BASE_DIR
     
     app = Flask(
         __name__,
-        template_folder=os.path.join(base_dir, 'templates'),
-        static_folder=os.path.join(base_dir, 'static')
+        template_folder=str(base_dir / 'templates'),
+        static_folder=str(base_dir / 'static')
     )
     
-    # Configuração
-    if config:
-        app.config.update(config)
+    # Configuração Flask
+    if flask_config:
+        app.config.update(flask_config)
     else:
-        app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
-        app.config['PRODUCTION_MODE'] = False
+        app.config['SECRET_KEY'] = config.SECRET_KEY
+        app.config['PRODUCTION_MODE'] = config.is_production
+        app.config['DEBUG'] = config.FLASK_DEBUG
     
     # CORS
     CORS(app, resources={
         r"/api/*": {
-            "origins": ["http://localhost:5000", "http://127.0.0.1:5000"],
+            "origins": config.CORS_ORIGINS,
             "methods": ["GET", "POST", "PUT", "DELETE"],
             "allow_headers": ["Content-Type"]
         }
     })
+    
+    logger.info("Aplicação Flask criada com sucesso")
     
     # Inicializar dependências (Infrastructure Layer)
     # Em produção, isso seria feito via DI Container
