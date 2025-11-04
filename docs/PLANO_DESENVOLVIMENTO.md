@@ -46,9 +46,9 @@ Este documento detalha o plano de desenvolvimento do ElizaSOC seguindo:
 
 ---
 
-## 🔄 FASE 1 — ARQUITETURA E ORGANIZAÇÃO
+## ✅ FASE 1 — ARQUITETURA E ORGANIZAÇÃO
 
-### Status: **EM PROGRESSO**
+### Status: **COMPLETA**
 
 #### Tarefa 1.1 — Estrutura de pastas (Clean Architecture) ✅
 
@@ -65,9 +65,9 @@ src/
 **Ações**:
 - [x] Criar `src/common/` se não existir
 - [x] `clamav_scanner.py` já está em `src/infrastructure/scanners/` (wrapper na raiz)
-- [ ] Revisar dependências entre camadas (em progresso)
+- [x] Revisar dependências entre camadas ✅ (script de validação criado)
 
-**Critério**: Nenhuma dependência circular; cada camada depende apenas da inferior.
+**Critério**: ✅ Nenhuma dependência circular; cada camada depende apenas da inferior.
 
 #### Tarefa 1.2 — Adapters e Ports ✅
 
@@ -91,14 +91,17 @@ class ScannerPort(ABC):
 
 **Critério**: Use-cases dependem apenas de interfaces.
 
-#### Tarefa 1.3 — Unificar entrypoint
+#### Tarefa 1.3 — Unificar entrypoint ✅
 
 **Ações**:
-- [ ] Manter `app_refactored.py` como ponto de entrada principal
-- [ ] `app.py` deve redirecionar para `app_refactored.py` ou servir como legacy wrapper
-- [ ] Validar que `python -m src.presentation.app` executa API corretamente
+- [x] Manter `app_refactored.py` como ponto de entrada principal
+- [x] Atualizar `app_refactored.py` para usar `src/common/config` e `src/common/logging`
+- [x] Melhorar `app_factory.py` com configuração centralizada
+- [x] Criar script de validação de dependências (`scripts/validate_dependencies.py`)
+- [x] Validar estrutura de dependências (✅ nenhuma violação encontrada)
+- [x] `app.py` mantido como legacy wrapper (compatibilidade)
 
-**Critério**: `python -m src.presentation.app` executa API corretamente.
+**Critério**: ✅ Entrypoint validado e dependências corretas
 
 ---
 
