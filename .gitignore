@@ -75,3 +75,33 @@ quarantine/
 logs/clamav_scans.log
 logs/virus_detections.log
 
+# Testing and Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Lock files (opcional - alguns projetos preferem commitar)
+# requirements.lock.txt
+# poetry.lock
