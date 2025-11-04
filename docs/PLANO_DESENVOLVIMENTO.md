@@ -46,11 +46,11 @@ Este documento detalha o plano de desenvolvimento do ElizaSOC seguindo:
 
 ---
 
-## ⏳ FASE 1 — ARQUITETURA E ORGANIZAÇÃO
+## 🔄 FASE 1 — ARQUITETURA E ORGANIZAÇÃO
 
-### Status: **PENDENTE**
+### Status: **EM PROGRESSO**
 
-#### Tarefa 1.1 — Estrutura de pastas (Clean Architecture)
+#### Tarefa 1.1 — Estrutura de pastas (Clean Architecture) ✅
 
 **Estrutura alvo**:
 ```
@@ -63,20 +63,21 @@ src/
 ```
 
 **Ações**:
-- [ ] Criar `src/common/` se não existir
-- [ ] Mover `clamav_scanner.py` → `src/infrastructure/scanners/`
-- [ ] Revisar dependências entre camadas
+- [x] Criar `src/common/` se não existir
+- [x] `clamav_scanner.py` já está em `src/infrastructure/scanners/` (wrapper na raiz)
+- [ ] Revisar dependências entre camadas (em progresso)
 
 **Critério**: Nenhuma dependência circular; cada camada depende apenas da inferior.
 
-#### Tarefa 1.2 — Adapters e Ports
+#### Tarefa 1.2 — Adapters e Ports ✅
 
 **Ações**:
-- [ ] Criar `src/domain/ports/`
-- [ ] Criar `ScannerPort` (interface)
-- [ ] Criar `RepositoryPort` (interface)
-- [ ] Criar `ThreatIntelligencePort` (interface)
-- [ ] Atualizar use-cases para depender de interfaces
+- [x] Criar `src/domain/ports/`
+- [x] Criar `ScannerPort` (interface)
+- [x] Criar `RepositoryPort` (interface)
+- [x] Criar `ThreatIntelligencePort` (interface)
+- [x] Criar `ClamAVScannerAdapter` que implementa `ScannerPort`
+- [ ] Atualizar use-cases para depender de interfaces (próximo passo)
 
 **Exemplo**:
 ```python

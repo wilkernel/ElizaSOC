@@ -1,0 +1,256 @@
+Prompt para Cursor AI — Continuação do Desenvolvimento do ElizaSOC
+(Clean Architecture + SOLID + TDD)
+
+===========================================
+CONTEXTUALIZAÇÃO
+===========================================
+
+ElizaSOC é um sistema SOC/monitor que utiliza Suricata e ClamAV, com um dashboard em Flask.
+Objetivo: evoluir o MVP para um produto profissional, modular, escalável e testável, seguindo:
+- Clean Architecture
+- Princípios SOLID
+- Test Driven Development (TDD)
+
+O repositório contém:
+src/, tests/, docs/, app.py, app_refactored.py, scripts utilitários e arquivos de configuração.
+O .gitignore está atualizado e bem estruturado.
+
+===========================================
+OBJETIVOS DO SPRINT
+===========================================
+
+1. Limpar e organizar o repositório (.gitignore definitivo, remover artefatos).
+2. Reorganizar código em camadas (Clean Architecture).
+3. Adotar TDD e atingir cobertura mínima em módulos críticos.
+4. Configurar CI/CD, Docker e scripts de ambiente.
+5. Melhorar logs, observabilidade e segurança.
+6. Planejar integração futura com Wazuh, MISP, RabbitMQ e Sandbox.
+
+===========================================
+FASE 0 — PREPARAÇÃO E LIMPEZA
+===========================================
+
+Tarefa 0.1 — Criar branch de limpeza
+- git checkout -b feat/cleanup-repo
+- Commit inicial com .gitignore atualizado.
+
+Tarefa 0.2 — Limpeza automática
+Objetivo: remover __pycache__, .pyc, venvs, htmlcov, logs temporários.
+
+Script: scripts/clean_project.sh
+#!/usr/bin/env bash
+set -e
+find . -type d -name "__pycache__" -exec rm -rf {} +
+find . -type f -name "*.pyc" -delete
+rm -rf .pytest_cache htmlcov venv .venv env *.zip
+git add .gitignore
+git commit -m "chore: cleanup repository" || true
+
+Critério: “git status” limpo sem caches nem arquivos grandes.
+
+Tarefa 0.3 — Validar dependências
+- Consolidar requirements.txt e requirements-dev.txt.
+- Testar instalação limpa:
+  python -m venv venv
+  source venv/bin/activate
+  pip install -r requirements.txt
+  pip freeze > requirements.lock.txt
+
+===========================================
+FASE 1 — ARQUITETURA E ORGANIZAÇÃO
+===========================================
+
+Tarefa 1.1 — Estrutura de pastas (Clean Architecture)
+
+src/
+  domain/           # entidades, value objects, exceptions
+  application/      # use-cases (ScanFileUseCase, CorrelateEventsUseCase)
+  infrastructure/   # scanners, repos, integrações (clamav, suricata, es)
+  presentation/     # Flask app, controllers, rotas
+  common/           # utils, config, logging, dtos
+
+Critério: nenhuma dependência circular; cada camada depende apenas da inferior.
+
+Tarefa 1.2 — Adapters e Ports
+Criar interfaces em domain/ports para scanners, repositórios e threat intelligence.
+
+Exemplo:
+from abc import ABC, abstractmethod
+class ScannerPort(ABC):
+    @abstractmethod
+    def scan(self, filepath: str) -> dict:
+        ...
+
+Critério: use-cases dependem apenas de interfaces.
+
+Tarefa 1.3 — Unificar entrypoint
+Manter app_refactored.py como ponto de entrada principal.
+app.py atua como redirecionador.
+
+Critério: python -m src.presentation.app executa API corretamente.
+
+===========================================
+FASE 2 — QUALIDADE DE CÓDIGO E LINT
+===========================================
+
+Tarefa 2.1 — Linters e formatadores
+Ferramentas: black, ruff (ou flake8), isort
+
+pyproject.toml:
+[tool.black]
+line-length = 88
+[tool.isort]
+profile = "black"
+
+Critério: black ., ruff check src tests sem erros.
+
+Tarefa 2.2 — Refatorar funções longas
+Dividir funções > 80 linhas.
+Reduzir complexidade ciclomatica (usar radon ou ruff metrics).
+
+===========================================
+FASE 3 — TESTES (TDD)
+===========================================
+
+Tarefa 3.1 — Configurar pytest e fixtures
+- pytest.ini
+- fixtures para clamav_scanner (mock) e suricata logs.
+
+Critério: pytest roda com smoke tests bem-sucedidos.
+
+Tarefa 3.2 — Cobertura mínima
+Priorizar:
+- ClamAVScanner
+- SimpleEventCorrelator
+- SimpleThreatIntelligenceService
+- API endpoints
+
+Exemplo:
+def test_scan_file_infected(monkeypatch):
+    class FakeScanner:
+        def scan(self, filepath):
+            return {"status": "infected", "signature": "EICAR-Test"}
+    scanner = FakeScanner()
+    usecase = ScanFileUseCase(scanner, InMemoryRepo())
+    result = usecase.execute("/tmp/eicar")
+    assert result["status"] == "infected"
+
+Critério: Cobertura > 60% em application e infrastructure.
+
+===========================================
+FASE 4 — API E OBSERVABILIDADE
+===========================================
+
+Tarefa 4.1 — Endpoint de Healthcheck
+/api/health → retorna status dos serviços (clamav, es, suricata)
+{"status": "ok", "services": {"clamav": "ok", "es": "ok"}}
+
+Tarefa 4.2 — Logs estruturados
+Substituir print por logging estruturado (JSONFormatter ou structlog).
+Criar src/common/logging.py.
+
+Tarefa 4.3 — Métricas
+Expor métricas básicas (alerts_count, scans_total) via /metrics (Prometheus format).
+
+===========================================
+FASE 5 — INFRA E DEVOPS
+===========================================
+
+Tarefa 5.1 — Docker e docker-compose
+Criar:
+- Dockerfile (app)
+- docker-compose.yml (app + elasticsearch + kibana + rabbitmq opcional)
+
+Critério: docker-compose up levanta todo o ambiente.
+
+Tarefa 5.2 — CI/CD
+GitHub Actions:
+- checkout
+- setup-python
+- install deps
+- lint
+- test
+- coverage
+
+Critério: PRs bloqueados se CI falhar.
+
+===========================================
+FASE 6 — SEGURANÇA E HARDENING
+===========================================
+
+Tarefa 6.1 — Secrets & Env
+- Não commitar .env
+- Criar .env.example
+- Usar python-dotenv (dev) e secrets manager (prod)
+
+Tarefa 6.2 — Auditoria de dependências
+- Rodar safety check ou pip-audit.
+- Corrigir ou justificar vulnerabilidades.
+
+Tarefa 6.3 — Autenticação e rate-limiting
+- Implementar JWT ou OAuth.
+- Rate-limiting para endpoints sensíveis.
+
+===========================================
+FASE 7 — FUNCIONALIDADES AVANÇADAS
+===========================================
+
+Tarefa 7.1 — Threat Intelligence (TI)
+Integrar MISP, OTX ou AbuseIPDB via adapters em infrastructure/tintel.
+Agendar atualização de IOCs via RabbitMQ/Kafka.
+
+Tarefa 7.2 — Sandbox dinâmico
+Enviar arquivos suspeitos para sandbox e anexar resultados aos alertas.
+
+Tarefa 7.3 — Honeypot Integration
+Receber logs do honeypot e correlacionar com eventos Suricata.
+
+===========================================
+ENTREGAS E CRITÉRIOS DE ACEITAÇÃO
+===========================================
+
+Cada PR deve conter:
+- Descrição clara e issue vinculada.
+- Testes unitários novos/atualizados.
+- Código formatado (black/isort).
+- CI verde.
+- Atualização de docs.
+
+Checklist de PR:
+☑ Código limpo e formatado
+☑ Testes adicionados/atualizados
+☑ Comentários e docstrings
+☑ README.md atualizado se necessário
+☑ CI verde
+
+===========================================
+EXEMPLO DE TASK ATUAL PARA O CURSOR AI
+===========================================
+
+Mover clamav_scanner.py → src/infrastructure/scanners/
+Criar interface ScannerPort em src/domain/ports/scanner_port.py
+Atualizar ScanFileUseCase para depender da interface.
+
+git checkout -b feat/move-clamav-scanner
+mkdir -p src/infrastructure/scanners
+git mv clamav_scanner.py src/infrastructure/scanners/clamav_scanner.py
+git add -A && git commit -m "refactor: move ClamAVScanner and add ScannerPort"
+
+===========================================
+DOCUMENTAÇÃO A ATUALIZAR
+===========================================
+
+README.md — quickstart e links
+docs/DEVELOPER_GUIDE.md — setup local e testes
+docs/ARQUITETURA.md — diagramas e rationale
+docs/CI_CD.md — pipelines e variáveis de ambiente
+
+===========================================
+PRÓXIMOS PASSOS (OPCIONAL)
+===========================================
+
+→ Gerar prompts separados por fase (para Cursor AI executar de forma incremental).
+→ Adicionar patch/diff exemplo para refatorações iniciais.
+→ Criar GitHub Actions YAML completo.
+→ Gerar Dockerfile e docker-compose de ambiente de dev/prod.
+
