@@ -53,7 +53,7 @@ clamscan --version
 
 ```bash
 # API Refatorada (Clean Architecture)
-python3 app_refactored.py
+python3 app.py
 
 # Ou API antiga (compatibilidade)
 python3 app.py
@@ -120,7 +120,7 @@ Para bloqueios de IP/domínio e isolamento de endpoints:
 sudo usermod -aG sudo $USER
 
 # Ou executar com sudo
-sudo python3 app_refactored.py
+sudo python3 app.py
 ```
 
 ## Verificação da Instalação
@@ -182,7 +182,7 @@ sudo mkdir -p /var/quarantine
 sudo chown $USER:$USER /var/quarantine
 
 # Para bloqueios de IP (requer root)
-sudo python3 app_refactored.py
+sudo python3 app.py
 ```
 
 ### Erro de Importação
@@ -207,7 +207,7 @@ kill -9 <PID>
 
 # Ou usar outra porta
 export FLASK_RUN_PORT=5001
-python3 app_refactored.py
+python3 app.py
 ```
 
 ## Configuração de Produção
@@ -218,7 +218,7 @@ python3 app_refactored.py
 pip install gunicorn
 
 # Executar
-gunicorn -w 4 -b 0.0.0.0:5000 app_refactored:app
+gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
 ### 2. Criar Service Systemd
@@ -234,7 +234,7 @@ After=network.target
 User=elizasoc
 WorkingDirectory=/opt/elizasoc
 Environment="PATH=/opt/elizasoc/venv/bin"
-ExecStart=/opt/elizasoc/venv/bin/gunicorn -w 4 -b 0.0.0.0:5000 app_refactored:app
+ExecStart=/opt/elizasoc/venv/bin/gunicorn -w 4 -b 0.0.0.0:5000 app:app
 
 [Install]
 WantedBy=multi-user.target

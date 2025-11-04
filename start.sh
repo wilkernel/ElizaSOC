@@ -1,6 +1,5 @@
 #!/bin/bash
-# Script unificado para iniciar ElizaSOC
-# Suporta tanto API antiga (app.py) quanto refatorada (app_refactored.py)
+# Script para iniciar ElizaSOC (Clean Architecture)
 
 set -e
 
@@ -35,33 +34,25 @@ fi
 # Criar diretórios necessários
 mkdir -p logs quarantine
 
-# Escolher qual aplicação executar
-API_TYPE="${1:-refactored}"
+echo -e "${GREEN}Iniciando API ElizaSOC (Clean Architecture)...${NC}"
+APP_FILE="app.py"
 
-if [ "$API_TYPE" = "legacy" ] || [ "$API_TYPE" = "old" ]; then
-    echo -e "${YELLOW}Iniciando API Legacy (app.py)...${NC}"
-    APP_FILE="app.py"
-    
-    # Verificar se Suricata está rodando (opcional)
-    if systemctl is-active --quiet suricata 2>/dev/null; then
-        echo "Suricata está ativo"
-    else
-        echo -e "${YELLOW}AVISO: Suricata não está rodando (dashboard ainda funcionará)${NC}"
-    fi
-    
-    if [ ! -r "/var/log/suricata/eve.json" ]; then
-        echo -e "${YELLOW}AVISO: Arquivo /var/log/suricata/eve.json não está acessível${NC}"
-    fi
+# Verificar se ClamAV está disponível
+if command -v clamscan &> /dev/null; then
+    echo "ClamAV disponível"
 else
-    echo -e "${GREEN}Iniciando API Refatorada (Clean Architecture)...${NC}"
-    APP_FILE="app_refactored.py"
-    
-    # Verificar se ClamAV está disponível
-    if command -v clamscan &> /dev/null; then
-        echo "ClamAV disponível"
-    else
-        echo -e "${YELLOW}AVISO: ClamAV não está instalado (funcionalidades de escaneamento limitadas)${NC}"
-    fi
+    echo -e "${YELLOW}AVISO: ClamAV não está instalado (funcionalidades de escaneamento limitadas)${NC}"
+fi
+
+# Verificar se Suricata está rodando (opcional)
+if systemctl is-active --quiet suricata 2>/dev/null; then
+    echo "Suricata está ativo"
+else
+    echo -e "${YELLOW}AVISO: Suricata não está rodando (dashboard ainda funcionará)${NC}"
+fi
+
+if [ ! -r "/var/log/suricata/eve.json" ]; then
+    echo -e "${YELLOW}AVISO: Arquivo /var/log/suricata/eve.json não está acessível${NC}"
 fi
 
 echo ""
@@ -69,10 +60,7 @@ echo -e "${GREEN}Servidor será iniciado em:${NC}"
 echo "  URL: http://localhost:5000"
 echo "  Status: http://localhost:5000/api/status"
 echo ""
-echo -e "${YELLOW}Para parar o servidor, pressione Ctrl+C${NC}"
-echo ""
 
 # Executar aplicação
-chmod +x "$APP_FILE" 2>/dev/null || true
-exec python3 "$APP_FILE"
+python3 "$APP_FILE"
 

@@ -13,10 +13,11 @@ import webbrowser
 import sys
 
 try:
-    # importar o Flask app definido em app.py
-    from app import app as flask_app
+    # importar o Flask app (Clean Architecture)
+    from src.presentation.api.app_factory import create_app
+    flask_app = create_app()
 except Exception as e:
-    print("Erro ao importar app.py:", e)
+    print("Erro ao importar app:", e)
     sys.exit(1)
 
 

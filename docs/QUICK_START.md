@@ -27,7 +27,7 @@ sudo freshclam
 ./start.sh
 
 # Opção 2: API Refatorada diretamente
-python3 app_refactored.py
+python3 app.py
 
 # Opção 3: API Legacy (compatibilidade)
 python3 app.py
@@ -53,7 +53,7 @@ start.sh
   ├─ Verifica Python3
   ├─ Instala dependências (se necessário)
   ├─ Cria diretórios (logs, quarantine)
-  └─ Executa app_refactored.py (padrão)
+  └─ Executa app.py (padrão)
       └─ API REST disponível em http://localhost:5000
 ```
 

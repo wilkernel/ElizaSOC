@@ -31,7 +31,7 @@ Este script inicia automaticamente todos os serviços necessários (Suricata, Cl
 
 **Opção 3 - Manual:**
 ```bash
-python3 app_refactored.py
+python3 app.py
 # ou
 python3 app.py
 ```

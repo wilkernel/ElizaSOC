@@ -91,7 +91,7 @@ Script `test_local.sh` criado e executado com sucesso:
 ./start.sh
 
 # Opção 2: API Refatorada diretamente
-python3 app_refactored.py
+python3 app.py
 
 # Opção 3: API Legacy (compatibilidade)
 python3 app.py

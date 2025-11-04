@@ -153,7 +153,7 @@ ElizaSOC/
 ├── scripts/                  # Scripts auxiliares
 ├── templates/                # Templates HTML (legacy)
 ├── static/                   # Arquivos estáticos (legacy)
-├── app_refactored.py         # API Refatorada (recomendado)
+├── app.py         # API Refatorada (recomendado)
 ├── app.py                    # API Legacy (compatibilidade)
 ├── start.sh                  # Script de inicialização
 └── requirements.txt          # Dependências Python
@@ -219,11 +219,11 @@ O sistema mantém compatibilidade com código antigo através de wrappers:
 ```bash
 # Desenvolvimento
 export FLASK_ENV=development
-python3 app_refactored.py
+python3 app.py
 
 # Produção
 export FLASK_ENV=production
-gunicorn -w 4 -b 0.0.0.0:5000 app_refactored:app
+gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
 ## Troubleshooting
@@ -242,7 +242,7 @@ pip install -r requirements.txt --force-reinstall
 ### Porta 5000 em uso
 ```bash
 export FLASK_RUN_PORT=5001
-python3 app_refactored.py
+python3 app.py
 ```
 
 ## Status dos Módulos

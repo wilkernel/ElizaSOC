@@ -63,7 +63,7 @@ echo ""
 
 # 6. Testar inicialização do servidor (timeout curto)
 echo "[6/6] Testando inicialização do servidor..."
-timeout 3 python3 app_refactored.py > /tmp/elizasoc_test.log 2>&1 &
+timeout 3 python3 app.py > /tmp/elizasoc_test.log 2>&1 &
 SERVER_PID=$!
 sleep 2
 
@@ -84,6 +84,6 @@ echo "Para iniciar o sistema:"
 echo "  ./start.sh"
 echo ""
 echo "Ou:"
-echo "  python3 app_refactored.py"
+echo "  python3 app.py"
 echo ""
 

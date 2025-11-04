@@ -314,7 +314,7 @@ ElizaSOC/
 │       └── dashboard.js     # ✅
 ├── docs/
 │   └── DASHBOARD_ADVANCED.md    # ✅ Esta especificação
-├── app_refactored.py        # ✅ Aplicação Clean Architecture
+├── app.py        # ✅ Aplicação Clean Architecture
 └── start_complete.sh        # ✅ Script de inicialização
 ```
 
@@ -326,7 +326,7 @@ ElizaSOC/
 bash start_complete.sh
 
 # Opção 2: Aplicação refatorada
-python3 app_refactored.py
+python3 app.py
 
 # Opção 3: Aplicação legacy
 python3 app.py

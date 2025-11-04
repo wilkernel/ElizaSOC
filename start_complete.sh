@@ -160,7 +160,7 @@ if [ "$API_TYPE" = "legacy" ] || [ "$API_TYPE" = "old" ]; then
     APP_FILE="app.py"
     echo -e "${YELLOW}Usando API Legacy (app.py)...${NC}"
 else
-    APP_FILE="app_refactored.py"
+    APP_FILE="app.py"
     echo -e "${GREEN}Usando API Refatorada (Clean Architecture)...${NC}"
 fi
 

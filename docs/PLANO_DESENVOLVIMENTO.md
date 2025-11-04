@@ -94,8 +94,8 @@ class ScannerPort(ABC):
 #### Tarefa 1.3 — Unificar entrypoint ✅
 
 **Ações**:
-- [x] Manter `app_refactored.py` como ponto de entrada principal
-- [x] Atualizar `app_refactored.py` para usar `src/common/config` e `src/common/logging`
+- [x] Manter `app.py` como ponto de entrada principal
+- [x] Atualizar `app.py` para usar `src/common/config` e `src/common/logging`
 - [x] Melhorar `app_factory.py` com configuração centralizada
 - [x] Criar script de validação de dependências (`scripts/validate_dependencies.py`)
 - [x] Validar estrutura de dependências (✅ nenhuma violação encontrada)
