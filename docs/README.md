@@ -2,7 +2,8 @@
 
 **Sistema Avançado de Detecção e Resposta a Ameaças**  
 **Versão**: 2.0.0  
-**Arquitetura**: Clean Architecture + SOLID + TDD
+**Arquitetura**: Clean Architecture + SOLID + TDD  
+**Licença**: MIT
 
 ## Documentos Principais
 
@@ -93,6 +94,16 @@ Consulte [PLANO_IMPLEMENTACAO.md](PLANO_IMPLEMENTACAO.md) para detalhes completo
 1. Feeds de Threat Intelligence
 2. Mensageria RabbitMQ
 3. Workers de processamento
+
+### Documentos de Referência Histórica
+
+Os seguintes documentos foram movidos para `docs/` e são mantidos para referência:
+- `GUIA_TESTES_RAPIDO.md` - Guia rápido de testes
+- `RESUMO_DASHBOARD.md` - Resumo da implementação do dashboard
+- `RESUMO_IMPLEMENTACAO_TESTES.md` - Resumo dos testes
+- `RESUMO_FINAL.md` - Resumo final do projeto
+
+Estes documentos podem conter emojis e informações históricas sobre o desenvolvimento.
 
 ## Estrutura de Arquivos
 

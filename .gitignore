@@ -105,3 +105,5 @@ dmypy.json
 # Lock files (opcional - alguns projetos preferem commitar)
 # requirements.lock.txt
 # poetry.lock
+public/videos/
+public/videos/*

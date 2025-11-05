@@ -1,9 +1,9 @@
-#  Índice de Documentação - ElizaSOC v2.0
+# Índice de Documentação - ElizaSOC v2.0
 
 **Versão**: 2.0.0  
-**Última atualização**: 2025-11-02
+**Última atualização**: 2025-11-04
 
-##  Documentos Principais
+## Documentos Principais
 
 ### 1. [README.md](README.md)
 **Objetivo**: Índice geral da documentação  
@@ -62,7 +62,7 @@
 - Priorização de tarefas
 - Estimativas e recursos
 
-##  Documentos de Segurança
+## Documentos de Segurança
 
 ### 7. [SECURITY.md](SECURITY.md)
 **Objetivo**: Segurança e boas práticas  
@@ -79,7 +79,7 @@
 - Mudanças de segurança
 - Correções aplicadas
 
-##  Documentos de Referência
+## Documentos de Referência
 
 ### 9. [DASHBOARD_README.md](DASHBOARD_README.md)
 **Objetivo**: Guia do dashboard web  
@@ -88,53 +88,55 @@
 - Funcionalidades do dashboard
 - Como usar
 
-### 10. [INSTALL.md](INSTALL.md)
-**Objetivo**: Instruções de instalação legadas  
-**Para quem**: Referência histórica  
-**Nota**: Pode estar desatualizado, preferir INSTALACAO.md
+### 10. [DASHBOARD_ADVANCED.md](DASHBOARD_ADVANCED.md)
+**Objetivo**: Especificação avançada do dashboard  
+**Para quem**: Desenvolvedores  
+**Conteúdo**:
+- Arquitetura do dashboard
+- APIs e endpoints
+- Configuração avançada
 
-### 11. [USAGE.md](USAGE.md)
-**Objetivo**: Guia de uso legado  
-**Para quem**: Referência histórica  
-**Nota**: Pode estar desatualizado, preferir USO.md
+## Guia de Leitura por Perfil
 
-##  Guia de Leitura por Perfil
-
-###  Gestor/Executivo
+### Gestor/Executivo
 1. Leia: [README.md](README.md) - Visão geral
 2. Revise: [ARQUITETURA.md](ARQUITETURA.md) - Status dos módulos
 
-###  Desenvolvedor
+### Desenvolvedor
 1. Leia: [ARQUITETURA.md](ARQUITETURA.md) - Entender estrutura
 2. Leia: [USO.md](USO.md) - Como usar a API
-3. Siga: TDD para novas funcionalidades
+3. Leia: [PLANO_IMPLEMENTACAO.md](PLANO_IMPLEMENTACAO.md) - Próximos passos
+4. Siga: TDD para novas funcionalidades
 
-###  Administrador de Sistema
-1. Leia: [INSTALACAO.md](INSTALACAO.md) - Instalação
-2. Leia: [USO.md](USO.md) - Configuração
-3. Revise: [SECURITY.md](SECURITY.md) - Segurança
+### Administrador de Sistema
+1. Leia: [QUICK_START.md](QUICK_START.md) - Início rápido
+2. Leia: [INSTALACAO.md](INSTALACAO.md) - Instalação
+3. Leia: [USO.md](USO.md) - Configuração
+4. Revise: [SECURITY.md](SECURITY.md) - Segurança
 
-###  Analista de Segurança
+### Analista de Segurança
 1. Leia: [ARQUITETURA.md](ARQUITETURA.md) - Fluxos de detecção
 2. Leia: [USO.md](USO.md) - API e casos de uso
 3. Revise: [SECURITY.md](SECURITY.md) - Configurações seguras
+4. Leia: [DASHBOARD_README.md](DASHBOARD_README.md) - Dashboard
 
-##  Documentos por Prioridade
+## Documentos por Prioridade
 
-###  Alta Prioridade (Leitura Obrigatória)
+### Alta Prioridade (Leitura Obrigatória)
 1. [QUICK_START.md](QUICK_START.md) - Início rápido
 2. [INSTALACAO.md](INSTALACAO.md) - Instalação completa
 3. [ARQUITETURA.md](ARQUITETURA.md) - Entender a arquitetura
 4. [USO.md](USO.md) - Como usar o sistema
 
-###  Média Prioridade (Importante)
+### Média Prioridade (Importante)
 5. [SECURITY.md](SECURITY.md) - Configuração segura
 6. [DASHBOARD_README.md](DASHBOARD_README.md) - Dashboard web
+7. [PLANO_IMPLEMENTACAO.md](PLANO_IMPLEMENTACAO.md) - Desenvolvimento
 
-###  Baixa Prioridade (Referência)
-7. [CHANGELOG_SECURITY.md](CHANGELOG_SECURITY.md) - Histórico
-8. [INSTALL.md](INSTALL.md) - Legado
-9. [USAGE.md](USAGE.md) - Legado
+### Baixa Prioridade (Referência)
+8. [CHANGELOG_SECURITY.md](CHANGELOG_SECURITY.md) - Histórico
+9. [DASHBOARD_ADVANCED.md](DASHBOARD_ADVANCED.md) - Dashboard avançado
+10. [PLANO_DESENVOLVIMENTO.md](PLANO_DESENVOLVIMENTO.md) - Plano técnico
 
 ##  Fluxo de Implementação Recomendado
 
@@ -150,34 +152,33 @@
 5. SECURITY.md (Securizar)
 ```
 
-##  Status dos Documentos
+## Documentos Movidos para docs/
+
+Os seguintes documentos foram movidos da raiz para `docs/`:
+- `GUIA_TESTES_RAPIDO.md` - Guia rápido de testes
+- `RESUMO_DASHBOARD.md` - Resumo da implementação do dashboard
+- `RESUMO_IMPLEMENTACAO_TESTES.md` - Resumo dos testes
+- `RESUMO_FINAL.md` - Resumo final do projeto
+
+## Status dos Documentos
 
 | Documento | Status | Última Atualização |
 |-----------|--------|-------------------|
-| README.md |  Atualizado | 2025-11-02 |
-| ARQUITETURA.md |  Atualizado | 2025-11-02 |
-| INSTALACAO.md |  Atualizado | 2025-11-02 |
-| USO.md |  Atualizado | 2025-11-02 |
-| SECURITY.md |  Verificar | - |
-| CHANGELOG_SECURITY.md |  Verificar | - |
-| DASHBOARD_README.md |  Verificar | - |
-| INSTALL.md |  Desatualizado | - |
-| USAGE.md |  Desatualizado | - |
+| README.md | Atualizado | 2025-11-04 |
+| ARQUITETURA.md | Atualizado | 2025-11-02 |
+| INSTALACAO.md | Atualizado | 2025-11-02 |
+| USO.md | Atualizado | 2025-11-02 |
+| QUICK_START.md | Atualizado | 2025-11-02 |
+| PLANO_IMPLEMENTACAO.md | Atualizado | 2025-11-02 |
+| SECURITY.md | Verificar | - |
+| CHANGELOG_SECURITY.md | Verificar | - |
+| DASHBOARD_README.md | Verificar | - |
+| DASHBOARD_ADVANCED.md | Verificar | - |
+| PLANO_DESENVOLVIMENTO.md | Referência | 2025-11-02 |
 
-##  Documentos Removidos
-
-Os seguintes documentos foram removidos por estarem desatualizados após a refatoração:
-- `GUIA_IMPLEMENTACAO_PASSO_A_PASSO.md` - Substituído por INSTALACAO.md
-- `ARQUITETURA_MONITORAMENTO_AVANCADO.md` - Substituído por ARQUITETURA.md
-- `ANALISE_SISTEMA.md` - Desatualizado
-- `AVALIACAO_PROJETO.md` - Desatualizado
-- `RELATORIO_STATUS.md` - Desatualizado
-- `RESUMO_EXECUTIVO.md` - Desatualizado
-- `RESUMO_INTEGRACAO_CLAMAV.md` - Desatualizado
-
-##  Atualizações
+## Atualizações
 
 Este índice será atualizado conforme novos documentos forem criados ou atualizados.
 
 **Versão**: 2.0.0  
-**Última atualização**: 2025-11-02
+**Última atualização**: 2025-11-04
