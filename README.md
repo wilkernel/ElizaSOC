@@ -1,325 +1,207 @@
-# ElizaSOC - Sistema de Detecção e Resposta a Ameaças
+# ElizaSOC — Intelligent Security Operations Platform
 
-**Versão**: 2.0.0  
-**Arquitetura**: Clean Architecture + SOLID + TDD
-**Licença**: MIT
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)]()
+[![Architecture](https://img.shields.io/badge/architecture-clean-green.svg)]()
+[![Status](https://img.shields.io/badge/status-in%20development-yellow.svg)]()
+[![Tests](https://img.shields.io/badge/tested%20with-pytest-orange.svg)]()
 
-## Sobre
+> 🇧🇷 **Versão em Português**: [README.pt-BR.md](README.pt-BR.md)
 
-ElizaSOC é um sistema completo de monitoramento, detecção e resposta automatizada a ameaças de segurança cibernética. Desenvolvido seguindo os princípios de Clean Architecture, SOLID e Test-Driven Development (TDD), oferece uma plataforma modular e extensível para Security Operations Center (SOC).
+---
 
-## Propósito
+## Overview
 
-O ElizaSOC foi projetado para:
+**ElizaSOC** is an intelligent **Security Operations Center (SOC)** platform designed to detect, correlate, and respond to cybersecurity threats in real time. The system unifies **SIEM** (Security Information and Event Management) and **SOAR** (Security Orchestration, Automation, and Response) concepts into a single modular and extensible architecture.
 
-- **Detecção de Ameaças**: Identificar malwares, phishing, intrusões e outras ameaças em tempo real
-- **Correlação de Eventos**: Correlacionar eventos de segurança para identificar campanhas e ataques coordenados
-- **Threat Intelligence**: Verificar indicadores de comprometimento (IOCs) contra bases de conhecimento
-- **Análise Comportamental**: Detectar anomalias usando Machine Learning
-- **Resposta Automatizada**: Bloquear IPs maliciosos, isolar endpoints e colocar arquivos em quarentena
-- **Visualização**: Dashboard web para monitoramento em tempo real
+The project is engineered with **Clean Architecture**, **SOLID principles**, and **Test-Driven Development (TDD)** to demonstrate production-grade software engineering practices applied to cybersecurity automation.
 
-## Arquitetura
+> ⚠️ **Project Status**: ElizaSOC is under **active development**. Core modules are functional, but persistence, authentication, and advanced integrations are part of the roadmap. See [Current Limitations](#current-limitations) and [Roadmap](#roadmap).
 
-O sistema segue Clean Architecture com quatro camadas principais:
+---
+
+## Table of Contents
+
+- [Demo](#demo)
+- [Screenshots](#screenshots)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Technical Decisions](#technical-decisions)
+- [System Workflow](#system-workflow)
+- [Example Use Case](#example-use-case)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [API Reference](#api-reference)
+- [Testing](#testing)
+- [Module Status](#module-status)
+- [Current Limitations](#current-limitations)
+- [Roadmap](#roadmap)
+- [Author](#author)
+- [License](#license)
+
+---
+
+## Demo
+
+[![ElizaSOC — Threat Detection and Response System](https://img.youtube.com/vi/fmdgvTvZxDI/0.jpg)](https://www.youtube.com/watch?v=fmdgvTvZxDI)
+
+▶️ **Watch the demo**: [https://www.youtube.com/watch?v=fmdgvTvZxDI](https://www.youtube.com/watch?v=fmdgvTvZxDI)
+
+---
+
+## Screenshots
+
+### Main Dashboard
+![Main Dashboard](public/img/Captura%20de%20tela%20de%202025-11-04%2000-34-43.png)
+
+### Real-Time Monitor
+![Real-Time Monitor](public/img/Captura%20de%20tela%20de%202025-11-04%2000-38-07.png)
+
+### Alerts and Metrics
+![Alerts and Metrics](public/img/Captura%20de%20tela%20de%202025-11-04%2000-40-13.png)
+
+### Protocol Analysis
+![Protocol Analysis](public/img/Captura%20de%20tela%20de%202025-11-04%2000-41-46.png)
+
+### Service Control
+![Service Control](public/img/Captura%20de%20tela%20de%202025-11-04%2000-43-24.png)
+
+### Interactive Charts
+![Interactive Charts](public/img/Captura%20de%20tela%20de%202025-11-04%2000-45-18.png)
+
+### Real-Time Logs
+![Real-Time Logs](public/img/Captura%20de%20tela%20de%202025-11-04%2000-46-31.png)
+
+### System Metrics
+![System Metrics](public/img/Captura%20de%20tela%20de%202025-11-04%2000-47-53.png)
+
+### Overview
+![Overview](public/img/Captura%20de%20tela%20de%202025-11-04%2000-48-55.png)
+
+---
+
+## Key Features
+
+### Real-Time Threat Detection
+- Malware scanning via **ClamAV** integration
+- Phishing and intrusion detection
+- IOC (Indicators of Compromise) validation
+- SHA-256 hash-based file identification
+
+### Event Correlation (SIEM)
+- Multi-event correlation by IP, domain, and hash
+- Coordinated campaign detection
+- Configurable time-window analysis
+- Correlated alert generation
+
+### Threat Intelligence Engine
+- IOC enrichment and normalization
+- Domain and URL canonicalization
+- Extensible foundation for external feeds
+
+### Behavioral Analysis
+- Frequency-based anomaly detection
+- Suspicious pattern recognition
+- Optional ML-based detection via **Isolation Forest** (scikit-learn)
+- Zero-day detection heuristics
+
+### Automated Response (SOAR)
+- IP blocking through **iptables**
+- Domain blocking via `/etc/hosts`
+- Automatic file quarantine
+- Endpoint isolation hooks (extensible)
+
+### Real-Time Monitoring Dashboard
+- Live metrics with multi-line charts (Chart.js)
+- Three concurrent metric streams: Alerts, Network, System
+- 30-second refresh cycle
+- Service controls for ClamAV and IDS
+- Server-Sent Events (SSE) for live log streaming
+
+### REST API
+- Complete endpoints for alerts, scans, and system metrics
+- Filtering, pagination, and statistics
+- Real-time log streaming
+
+---
+
+## Architecture
+
+ElizaSOC follows **Clean Architecture**, enforcing the **Dependency Rule**: dependencies always point inward, isolating the domain from frameworks, databases, and UI concerns.
 
 ```
 ┌─────────────────────────────────────────┐
-│     Presentation Layer                  │
-│  (Controllers, API REST, Dashboard)    │
+│        Presentation Layer               │
+│   (Controllers, REST API, Dashboard)    │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
-│     Application Layer                   │
-│  (Use Cases, Business Logic)            │
+│        Application Layer                │
+│      (Use Cases, Orchestration)         │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
-│     Domain Layer (Core)                 │
-│  (Entities, Interfaces/Ports)          │
-└──────────────┬──────────────────────────┘
+│         Domain Layer (Core)             │
+│      (Entities, Ports/Interfaces)       │
+└──────────────▲──────────────────────────┘
                │
-┌──────────────▼──────────────────────────┐
-│     Infrastructure Layer                │
-│  (Adapters, Implementations)            │
+┌──────────────┴──────────────────────────┐
+│       Infrastructure Layer              │
+│   (Adapters, Concrete Implementations)  │
 └─────────────────────────────────────────┘
 ```
 
-### Princípios Aplicados
-
-- **Clean Architecture**: Separação clara de responsabilidades, independência de frameworks
-- **SOLID**: Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion
-- **TDD**: Desenvolvimento orientado a testes
-- **Dependency Rule**: Dependências apontam para dentro (Domain é independente)
-
-## O Que Está Implementado
-
-### Módulos Core
-
-1. **Análise de Arquivos**
-   - Escaneamento com ClamAV
-   - Quarentena automática de arquivos infectados
-   - Hash SHA256 para identificação
-   - Categorização de ameaças
-
-2. **SIEM/Correlação de Eventos**
-   - Correlação por IP, domínio, hash
-   - Detecção de campanhas
-   - Alertas correlacionados
-   - Janelas de tempo configuráveis
-
-3. **Threat Intelligence**
-   - Verificação de IOCs (IPs, domínios, hashes, URLs)
-   - Enriquecimento de alertas
-   - Normalização de domínios/URLs
-   - Base para integração com feeds externos
-
-4. **Análise Comportamental**
-   - Detecção de anomalias de frequência
-   - Detecção de padrões suspeitos
-   - Isolation Forest (ML opcional)
-   - Detecção de zero-day
-
-5. **Resposta Automatizada**
-   - Bloqueio de IPs (iptables)
-   - Bloqueio de domínios (/etc/hosts)
-   - Quarentena de arquivos
-   - Isolamento de endpoints
-
-6. **API REST**
-   - Endpoints completos para alertas, arquivos e sistema
-   - Filtros e paginação
-   - Estatísticas em tempo real
-   - Streaming de logs (Server-Sent Events)
-
-7. **Dashboard Web**
-   - Monitor em tempo real estilo "crypto trading"
-   - Gráficos multi-linha com Chart.js
-   - Três métricas simultâneas: Alertas, Rede, Sistema
-   - Atualização dinâmica a cada 30 segundos
-   - Controle de serviços (Suricata, ClamAV)
-   - Análise de protocolos monitorados
-
-## Endpoints da API
-
-### Status
-
-#### `GET /api/status`
-Retorna o status do sistema.
-
-**Exemplo**:
-```bash
-curl http://localhost:5000/api/status
-```
-
-### Alertas
-
-#### `GET /api/alerts`
-Lista alertas com filtros opcionais.
-
-**Parâmetros**:
-- `limit` (int, padrão: 100) - Número máximo de alertas
-- `offset` (int, padrão: 0) - Paginação
-- `category` (string) - Filtrar por categoria (phishing, malware, etc)
-- `severity` (int) - Filtrar por severidade (1-4)
-
-**Exemplo**:
-```bash
-curl "http://localhost:5000/api/alerts?limit=50&category=phishing"
-```
-
-#### `GET /api/alerts/<id>`
-Busca alerta específico por ID.
-
-**Exemplo**:
-```bash
-curl "http://localhost:5000/api/alerts/alert-123"
-```
-
-#### `GET /api/alerts/stats`
-Estatísticas de alertas.
-
-**Resposta**:
-```json
-{
-  "total": 1000,
-  "phishing": 150,
-  "malware": 50,
-  "critical": 10,
-  "timestamp": "2025-11-02T10:30:00"
-}
-```
-
-#### `GET /api/alerts/phishing`
-Lista apenas alertas de phishing.
-
-**Exemplo**:
-```bash
-curl "http://localhost:5000/api/alerts/phishing?limit=20"
-```
-
-#### `GET /api/alerts/recent`
-Lista alertas recentes.
-
-**Exemplo**:
-```bash
-curl "http://localhost:5000/api/alerts/recent"
-```
-
-### Arquivos
-
-#### `GET /api/files/scanned`
-Lista arquivos escaneados.
-
-**Parâmetros**:
-- `limit` (int, padrão: 100)
-- `offset` (int, padrão: 0)
-
-**Exemplo**:
-```bash
-curl "http://localhost:5000/api/files/scanned?limit=50"
-```
-
-#### `GET /api/files/infected`
-Lista apenas arquivos infectados.
-
-**Exemplo**:
-```bash
-curl http://localhost:5000/api/files/infected
-```
-
-#### `POST /api/files/scan`
-Escaneia um arquivo.
-
-**Body**:
-```json
-{
-  "filepath": "/path/to/file.exe",
-  "quarantine": true
-}
-```
-
-**Exemplo**:
-```bash
-curl -X POST http://localhost:5000/api/files/scan \
-  -H "Content-Type: application/json" \
-  -d '{"filepath": "/tmp/suspicious.exe", "quarantine": true}'
-```
-
-**Resposta**:
-```json
-{
-  "id": "scan-123",
-  "filepath": "/tmp/suspicious.exe",
-  "filename": "suspicious.exe",
-  "status": "infected",
-  "threat_name": "Trojan.Generic.123",
-  "quarantined": true,
-  "scan_time": "2025-11-02T10:30:00"
-}
-```
-
-#### `GET /api/files/<scan_id>`
-Busca resultado de escaneamento por ID.
-
-**Exemplo**:
-```bash
-curl "http://localhost:5000/api/files/scan-123"
-```
-
-### Dashboard
-
-#### `GET /api/stats`
-Estatísticas gerais do sistema.
-
-**Exemplo**:
-```bash
-curl http://localhost:5000/api/stats
-```
-
-#### `GET /api/phishing`
-Alertas de phishing para dashboard.
-
-**Exemplo**:
-```bash
-curl http://localhost:5000/api/phishing
-```
-
-#### `GET /api/logs/stream`
-Stream de logs em tempo real (Server-Sent Events).
-
-**Exemplo**:
-```bash
-curl http://localhost:5000/api/logs/stream
-```
-
-#### `GET /api/protocols/<protocol>`
-Estatísticas de um protocolo específico.
-
-**Exemplo**:
-```bash
-curl http://localhost:5000/api/protocols/TCP
-```
-
-### Dashboard Web
-
-#### `GET /`
-Interface web do dashboard.
-
-Acesse: `http://localhost:5000`
-
-## Diagrama UML - Arquitetura de Camadas
+### Layer Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Presentation Layer                        │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  Alerts      │  │  Files       │  │  Dashboard   │      │
+│  │   Alerts     │  │    Files     │  │  Dashboard   │      │
 │  │  Controller  │  │  Controller  │  │  Controller  │      │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-│         │                 │                 │               │
 └─────────┼─────────────────┼─────────────────┼───────────────┘
           │                 │                 │
 ┌─────────▼─────────────────▼─────────────────▼───────────────┐
-│                    Application Layer                        │
+│                    Application Layer                         │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ ScanFile     │  │ Correlate    │  │ Analyze      │      │
-│  │ UseCase      │  │ Events       │  │ Threat       │      │
-│  │              │  │ UseCase      │  │ UseCase      │      │
+│  │  ScanFile    │  │  Correlate   │  │   Analyze    │      │
+│  │   UseCase    │  │   Events     │  │   Threat     │      │
+│  │              │  │   UseCase    │  │   UseCase    │      │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-│         │                 │                 │               │
 └─────────┼─────────────────┼─────────────────┼───────────────┘
           │                 │                 │
 ┌─────────▼─────────────────▼─────────────────▼───────────────┐
 │                      Domain Layer                            │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   Alert      │  │ FileScan     │  │ Security     │      │
-│  │   Entity     │  │ Entity       │  │ Event       │      │
+│  │    Alert     │  │   FileScan   │  │   Security   │      │
+│  │    Entity    │  │    Entity    │  │    Event     │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ Alert        │  │ FileScan     │  │ Event        │      │
-│  │ Repository   │  │ Repository   │  │ Repository   │      │
-│  │ (Port)       │  │ (Port)       │  │ (Port)       │      │
+│  │    Alert     │  │   FileScan   │  │    Event     │      │
+│  │  Repository  │  │  Repository  │  │  Repository  │      │
+│  │    (Port)    │  │    (Port)    │  │    (Port)    │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 └─────────────────────────────────────────────────────────────┘
           ▲                 ▲                 ▲
 ┌─────────┼─────────────────┼─────────────────┼───────────────┐
-│              Infrastructure Layer                           │
+│                   Infrastructure Layer                       │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ InMemory     │  │ InMemory     │  │ ClamAV       │      │
-│  │ Alert        │  │ FileScan     │  │ Scanner      │      │
-│  │ Repository   │  │ Repository   │  │              │      │
+│  │   InMemory   │  │   InMemory   │  │    ClamAV    │      │
+│  │    Alert     │  │   FileScan   │  │   Scanner    │      │
+│  │  Repository  │  │  Repository  │  │              │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ Event        │  │ Threat       │  │ Behavioral   │      │
-│  │ Correlator   │  │ Intelligence │  │ Analyzer     │      │
+│  │    Event     │  │    Threat    │  │  Behavioral  │      │
+│  │  Correlator  │  │ Intelligence │  │   Analyzer   │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Modelo Entidade-Relacionamento (MER)
+### Entity-Relationship Model
 
 ```
 ┌──────────────┐
@@ -337,11 +219,9 @@ Acesse: `http://localhost:5000`
 │ correlated   │
 │ processed    │
 └──────┬───────┘
-       │
        │ 1:N
-       │
 ┌──────▼──────────────┐
-│  SecurityEvent      │
+│   SecurityEvent     │
 ├─────────────────────┤
 │ id (PK)             │
 │ event_type          │
@@ -351,11 +231,9 @@ Acesse: `http://localhost:5000`
 │ related_events[]    │
 │ processed           │
 └──────┬──────────────┘
-       │
        │ N:1
-       │
 ┌──────▼──────────────┐
-│   FileScanResult    │
+│  FileScanResult     │
 ├─────────────────────┤
 │ id (PK)             │
 │ filepath            │
@@ -369,11 +247,9 @@ Acesse: `http://localhost:5000`
 │ quarantined         │
 │ quarantine_path     │
 └──────┬──────────────┘
-       │
        │ N:1
-       │
 ┌──────▼──────────────┐
-│      IOC            │
+│        IOC          │
 ├─────────────────────┤
 │ id (PK)             │
 │ ioc_type            │
@@ -387,182 +263,363 @@ Acesse: `http://localhost:5000`
 └─────────────────────┘
 ```
 
-## Imagens do Sistema
+---
 
-### 1
-![Dashboard Principal](public/img/Captura%20de%20tela%20de%202025-11-04%2000-34-43.png)
+## Technical Decisions
 
-### 2
-![Monitor em Tempo Real](public/img/Captura%20de%20tela%20de%202025-11-04%2000-38-07.png)
+This section documents the **engineering rationale** behind the project, useful for technical reviews and architectural discussions.
 
-### 3
-![Alertas e Métricas](public/img/Captura%20de%20tela%20de%202025-11-04%2000-40-13.png)
+| Decision | Rationale |
+|---------|-----------|
+| **Clean Architecture** | Decouples business rules from frameworks (Flask, ClamAV, ML libraries), enabling independent evolution and easier testing. |
+| **Ports & Adapters (Hexagonal)** | The domain defines interfaces (ports); infrastructure provides implementations. Swapping ClamAV for VirusTotal, for example, requires no changes to use cases. |
+| **Test-Driven Development (TDD)** | Tests are written before implementation, guaranteeing high coverage and a domain that is testable by design. |
+| **SOLID Principles** | Applied throughout: single-responsibility use cases, open/closed extension via new adapters, interface segregation across repositories. |
+| **In-Memory Repositories (initial)** | Allow rapid prototyping and validation of the domain model without coupling to a specific database. Will be replaced with PostgreSQL/Elasticsearch adapters without touching the domain. |
+| **Flask over Django** | Lightweight micro-framework fits the API-first approach; the project does not need Django's batteries (ORM, admin, templates) since persistence lives in the infrastructure layer. |
+| **Server-Sent Events (SSE)** | Chosen over WebSockets for log streaming because the flow is unidirectional (server → client), simpler to implement, and works through standard HTTP infrastructure. |
+| **Isolation Forest for anomalies** | Unsupervised algorithm well-suited for security data, where labeled examples are scarce and outliers are precisely what needs to be detected. |
+| **ClamAV integration** | Mature, open-source, and broadly recognized engine; integration occurs via subprocess in the infrastructure layer, keeping the domain agnostic. |
+| **iptables / `/etc/hosts` for response** | Native Linux mechanisms that require no additional services. The `ResponseService` interface allows future replacement with cloud firewalls or EDRs. |
 
-### 4
-![Análise de Protocolos](public/img/Captura%20de%20tela%20de%202025-11-04%2000-41-46.png)
+---
 
-### Controle de Serviços
-![Controle de Serviços](public/img/Captura%20de%20tela%20de%202025-11-04%2000-43-24.png)
+## System Workflow
 
-### 5
-![Gráficos Interativos](public/img/Captura%20de%20tela%20de%202025-11-04%2000-45-18.png)
-
-### 6
-![Logs em Tempo Real](public/img/Captura%20de%20tela%20de%202025-11-04%2000-46-31.png)
-
-### 7
-![Métricas do Sistema](public/img/Captura%20de%20tela%20de%202025-11-04%2000-47-53.png)
-
-### 8
-![Visão Geral](public/img/Captura%20de%20tela%20de%202025-11-04%2000-48-55.png)
-
-## Vídeo Demonstrativo
-
-[![ElizaSOC - Sistema de Detecção e Resposta a Ameaças](https://img.youtube.com/vi/fmdgvTvZxDI/0.jpg)](https://www.youtube.com/watch?v=fmdgvTvZxDI)
-
-**Assista ao vídeo**: [https://www.youtube.com/watch?v=fmdgvTvZxDI](https://www.youtube.com/watch?v=fmdgvTvZxDI)
-
-
-## Instalação Rápida
-
-```bash
-# 1. Clonar repositório
-git clone <url-repositorio> ElizaSOC
-cd ElizaSOC
-
-# 2. Instalar dependências do sistema
-sudo apt update
-sudo apt install -y python3-pip python3-venv clamav
-
-# 3. Criar ambiente virtual
-python3 -m venv venv
-source venv/bin/activate
-
-# 4. Instalar dependências Python
-pip install -r requirements.txt
-
-# 5. Configurar ClamAV (opcional)
-sudo freshclam
-
-# 6. Iniciar sistema
-./start.sh
+```
+[Data Sources]
+     ↓
+[Event Ingestion]
+     ↓
+[Correlation Engine] ──→ [Threat Intelligence]
+     ↓                          ↓
+[Behavioral Analysis] ←─────────┘
+     ↓
+[Decision Engine]
+     ↓
+[Automated Response]
+     ↓
+[Dashboard & API]
 ```
 
-A API estará disponível em: `http://localhost:5000`
+---
 
-## Estrutura do Projeto
+## Example Use Case
+
+**Brute-force attack detection and automated mitigation**
+
+1. Multiple failed authentication events arrive from the same source IP.
+2. The **Correlation Engine** groups these events within a configurable time window.
+3. The **Threat Intelligence** module checks the IP against the IOC base.
+4. The **Behavioral Analyzer** confirms the frequency anomaly.
+5. The **Decision Engine** classifies the activity as malicious.
+6. The **Response Service** automatically:
+   - Blocks the IP via `iptables`
+   - Generates a correlated alert
+   - Logs the action for audit purposes
+7. The **Dashboard** updates in real time via SSE.
+
+---
+
+## Tech Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Backend** | Python 3.10+, Flask 3.0+ |
+| **Security** | ClamAV, iptables |
+| **Machine Learning** | scikit-learn (Isolation Forest) |
+| **Frontend** | HTML5, JavaScript, Chart.js |
+| **Streaming** | Server-Sent Events (SSE) |
+| **Testing** | pytest, pytest-cov |
+| **Production** | Gunicorn |
+
+---
+
+## Project Structure
 
 ```
 ElizaSOC/
-├── src/                      # Código fonte (Clean Architecture)
-│   ├── domain/               # Camada de domínio (entities, interfaces)
-│   │   ├── entities/         # Entidades de negócio
-│   │   ├── ports/             # Interfaces (repositories, services)
-│   │   ├── repositories/      # Interfaces de repositórios
-│   │   └── services/          # Interfaces de serviços
-│   ├── application/          # Camada de aplicação (use cases)
-│   │   └── use_cases/         # Casos de uso
-│   ├── infrastructure/        # Camada de infraestrutura (implementações)
-│   │   ├── scanners/          # Scanners (ClamAV)
-│   │   ├── repositories/      # Implementações de repositórios
-│   │   └── services/          # Implementações de serviços
-│   └── presentation/          # Camada de apresentação (API REST)
-│       └── api/               # Controllers e rotas
-├── tests/                     # Testes automatizados
-│   ├── domain/                # Testes de domínio
-│   ├── infrastructure/        # Testes de infraestrutura
-│   └── integration/           # Testes de integração
-├── docs/                      # Documentação completa
-├── scripts/                    # Scripts auxiliares
-├── templates/                   # Templates HTML
-├── static/                     # Arquivos estáticos (CSS, JS)
-├── app.py                      # Aplicação principal
-├── start.sh                    # Script de inicialização
-└── requirements.txt            # Dependências Python
+├── src/                          # Source code (Clean Architecture)
+│   ├── domain/                   # Domain layer
+│   │   ├── entities/             # Business entities
+│   │   ├── ports/                # Interfaces (ports)
+│   │   ├── repositories/         # Repository interfaces
+│   │   └── services/             # Service interfaces
+│   ├── application/              # Application layer
+│   │   └── use_cases/            # Use cases
+│   ├── infrastructure/           # Infrastructure layer
+│   │   ├── scanners/             # ClamAV adapter
+│   │   ├── repositories/         # Repository implementations
+│   │   └── services/             # Service implementations
+│   └── presentation/             # Presentation layer
+│       └── api/                  # REST controllers
+├── tests/                        # Automated tests
+│   ├── domain/                   # Domain tests
+│   ├── infrastructure/           # Infrastructure tests
+│   └── integration/              # Integration tests
+├── docs/                         # Full documentation
+├── scripts/                      # Helper scripts
+├── templates/                    # HTML templates
+├── static/                       # Static assets (CSS, JS)
+├── public/img/                   # Project screenshots
+├── app.py                        # Application entry point
+├── start.sh                      # Startup script
+└── requirements.txt              # Python dependencies
 ```
 
-## Testes
+---
 
-```bash
-# Todos os testes
-pytest
+## Installation
 
-# Com cobertura
-pytest --cov=src --cov-report=html
-
-# Testes específicos
-pytest tests/domain/
-pytest tests/integration/
-```
-
-## Requisitos
-
+### Requirements
 - Python 3.10+
-- Flask 3.0+
-- ClamAV (opcional, para escaneamento)
-- scikit-learn (opcional, para análise comportamental ML)
+- Linux (Ubuntu/Debian recommended)
+- ClamAV (optional, for file scanning)
+- scikit-learn (optional, for ML-based behavioral analysis)
 
-## Documentação
-
-Documentação completa disponível em `docs/`:
-
-- [docs/README.md](docs/README.md) - Índice da documentação
-- [docs/ARQUITETURA.md](docs/ARQUITETURA.md) - Arquitetura do sistema
-- [docs/INSTALACAO.md](docs/INSTALACAO.md) - Instalação detalhada
-- [docs/USO.md](docs/USO.md) - Guia de uso completo
-- [docs/QUICK_START.md](docs/QUICK_START.md) - Início rápido
-- [docs/SECURITY.md](docs/SECURITY.md) - Segurança e boas práticas
-
-## Desenvolvimento
-
-### Adicionar Novo Módulo
-
-1. **Domain**: Criar entidades e interfaces
-2. **Application**: Criar caso de uso
-3. **Infrastructure**: Implementar serviços/repositórios
-4. **Tests**: Escrever testes (TDD)
-5. **Presentation**: Criar controllers se necessário
-
-### Executar Localmente
+### Quick Start
 
 ```bash
-# Desenvolvimento
+# 1. Clone the repository
+git clone <repository-url> ElizaSOC
+cd ElizaSOC
+
+# 2. Install system dependencies
+sudo apt update
+sudo apt install -y python3-pip python3-venv clamav
+
+# 3. Create a virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# 4. Install Python dependencies
+pip install -r requirements.txt
+
+# 5. Update virus database (optional)
+sudo freshclam
+
+# 6. Start the system
+./start.sh
+```
+
+The API will be available at: **http://localhost:5000**
+
+### Running Modes
+
+```bash
+# Development
 export FLASK_ENV=development
 python3 app.py
 
-# Produção
+# Production
 export FLASK_ENV=production
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
-## Status dos Módulos
+---
 
-| Módulo | Status |
-|--------|--------|
-| Análise de Arquivos | Completo |
-| SIEM/Correlação | Completo |
-| Threat Intelligence | Completo (básico) |
-| Análise Comportamental | Completo |
-| Resposta Automatizada | Completo |
-| API REST | Completo |
-| Dashboard Web | Completo |
+## API Reference
 
-## Próximos Passos
+Base URL: `http://localhost:5000/api`
 
-- Integração com feeds externos de Threat Intelligence
-- Repositórios persistentes (PostgreSQL/Elasticsearch)
-- Mensageria (RabbitMQ/Kafka)
-- Honeypots
-- Sandbox para análise dinâmica
+### System Status
 
-## Licença
+#### `GET /api/status`
+Returns system status.
 
-Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+```bash
+curl http://localhost:5000/api/status
+```
 
-## Autor
+### Alerts
 
-**Wilker Junio Coelho Pimenta**
+#### `GET /api/alerts`
+List alerts with optional filters.
+
+**Query parameters**:
+- `limit` (int, default: 100) — maximum number of alerts
+- `offset` (int, default: 0) — pagination
+- `category` (string) — filter by category (`phishing`, `malware`, etc.)
+- `severity` (int) — filter by severity (1–4)
+
+```bash
+curl "http://localhost:5000/api/alerts?limit=50&category=phishing"
+```
+
+#### `GET /api/alerts/{id}`
+Retrieve a specific alert by ID.
+
+#### `GET /api/alerts/stats`
+Alert statistics.
+
+```json
+{
+  "total": 1000,
+  "phishing": 150,
+  "malware": 50,
+  "critical": 10,
+  "timestamp": "2025-11-02T10:30:00"
+}
+```
+
+#### `GET /api/alerts/phishing`
+List phishing-only alerts.
+
+#### `GET /api/alerts/recent`
+List recent alerts.
+
+### Files
+
+#### `GET /api/files/scanned`
+List scanned files (supports `limit` and `offset`).
+
+#### `GET /api/files/infected`
+List infected files only.
+
+#### `POST /api/files/scan`
+Scan a file.
+
+**Body**:
+```json
+{
+  "filepath": "/path/to/file.exe",
+  "quarantine": true
+}
+```
+
+**Response**:
+```json
+{
+  "id": "scan-123",
+  "filepath": "/tmp/suspicious.exe",
+  "filename": "suspicious.exe",
+  "status": "infected",
+  "threat_name": "Trojan.Generic.123",
+  "quarantined": true,
+  "scan_time": "2025-11-02T10:30:00"
+}
+```
+
+#### `GET /api/files/{scan_id}`
+Retrieve scan result by ID.
+
+### Dashboard
+
+#### `GET /api/stats`
+General system statistics.
+
+#### `GET /api/phishing`
+Phishing alerts for dashboard.
+
+#### `GET /api/logs/stream`
+Real-time log stream (Server-Sent Events).
+
+#### `GET /api/protocols/{protocol}`
+Statistics for a specific protocol (e.g., TCP, UDP).
+
+### Web Dashboard
+
+#### `GET /`
+Web dashboard interface — open `http://localhost:5000` in a browser.
 
 ---
 
-Para mais informações, consulte a [documentação completa](docs/README.md).
+## Testing
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage report
+pytest --cov=src --cov-report=html
+
+# Run specific test suites
+pytest tests/domain/
+pytest tests/integration/
+```
+
+The test suite is organized by architectural layer, reinforcing the project's adherence to Clean Architecture.
+
+---
+
+## Module Status
+
+| Module | Status |
+|--------|--------|
+| File Analysis (ClamAV) | ✅ Complete |
+| SIEM / Event Correlation | ✅ Complete |
+| Threat Intelligence | 🟡 Functional (basic) |
+| Behavioral Analysis | ✅ Complete |
+| Automated Response | ✅ Complete |
+| REST API | ✅ Complete |
+| Web Dashboard | ✅ Complete |
+| Persistent Storage | 🔴 Pending |
+| Authentication / RBAC | 🔴 Pending |
+| External Threat Feeds | 🔴 Pending |
+
+---
+
+## Current Limitations
+
+This project is **under active development**. Known limitations include:
+
+- **In-memory storage**: Repositories are non-persistent — data is lost between restarts. Persistent adapters are part of the roadmap.
+- **No authentication**: The API and dashboard do not yet implement authentication or authorization. **Do not expose to public networks.**
+- **Limited threat feeds**: Threat Intelligence works on local IOC bases; integration with external feeds (AbuseIPDB, VirusTotal, MISP) is planned.
+- **Simplified ML models**: Behavioral analysis uses pre-trained models without a continuous training pipeline.
+- **System-level operations**: Automated response interacts with `iptables` and `/etc/hosts`. Use with caution and review permissions before production deployment.
+
+---
+
+## Roadmap
+
+- [ ] Persistent storage with **PostgreSQL** and **Elasticsearch**
+- [ ] **JWT** authentication and **RBAC**
+- [ ] Real-time ingestion from **Suricata** / **Zeek**
+- [ ] Message broker (**RabbitMQ** / **Kafka**) for async processing
+- [ ] External threat intelligence feeds (**AbuseIPDB**, **VirusTotal**, **MISP**)
+- [ ] **Sandbox** for dynamic analysis
+- [ ] **Honeypots**
+- [ ] Containerization with **Docker** and orchestration with **Kubernetes**
+- [ ] CI/CD pipeline with **GitHub Actions**
+- [ ] Continuous training pipeline for ML models
+
+---
+
+## Documentation
+
+Full documentation is available in the [`docs/`](docs/) folder:
+
+- [`docs/README.md`](docs/README.md) — documentation index
+- [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) — system architecture
+- [`docs/INSTALACAO.md`](docs/INSTALACAO.md) — detailed installation
+- [`docs/USO.md`](docs/USO.md) — usage guide
+- [`docs/QUICK_START.md`](docs/QUICK_START.md) — quick start
+- [`docs/SECURITY.md`](docs/SECURITY.md) — security guidelines
+
+---
+
+## Contributing
+
+This is a personal project under active development. Suggestions, code reviews, and architectural feedback are welcome via issues or pull requests.
+
+---
+
+## Author
+
+**Wilker Junio Coelho Pimenta**
+
+- 🔗 GitHub: [github.com/wilkernel](https://github.com/wilkernel)
+- 💼 LinkedIn: [linkedin.com/in/wil-j-c-pimenta](https://linkedin.com/in/wil-j-c-pimenta)
+
+---
+
+## License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+---
+
+<p align="center">
+  Built with ❤️ applying Clean Architecture, SOLID, and TDD.
+</p>
